@@ -13,7 +13,8 @@
       "Bash(tar xzf *)",
       "Bash(git add *)",
       "Bash(git merge --no-ff m1-project-skeleton -m ' *)",
-      "Bash(git commit *)"
+      "Bash(git commit *)",
+      "Bash(git push *)"
     ]
   }
 }
