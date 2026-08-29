@@ -243,7 +243,7 @@ export async function updateListing(
 
   const { data: currentImages } = await supabase
     .from("listing_images")
-    .select("id, storage_path")
+    .select("id, storage_path, position")
     .eq("listing_id", listingId);
 
   const toRemove = (currentImages ?? []).filter((img) => !keptImageIds.includes(img.id));
@@ -258,6 +258,27 @@ export async function updateListing(
         "id",
         toRemove.map((img) => img.id),
       );
+  }
+
+  // Renumber the surviving kept images to contiguous positions 0..k-1 in
+  // their existing relative order (their current `position` ascending —
+  // that's their display order, since removal never reorders the rest).
+  // Without this, removing a non-last image (especially position 0, the
+  // cover image per spec §4) leaves gaps: no image ends up at position 0
+  // (breaking the cover-photo queries on /listings and /listings/mine,
+  // which fetch `.eq("position", 0)`), and uploadNewPhotos's
+  // `startPosition = keptImageIds.length` would otherwise collide with a
+  // kept image's untouched original position — `listing_images.position`
+  // has no uniqueness constraint, so that would silently insert a
+  // duplicate-position row rather than error.
+  const keptImagesInOrder = (currentImages ?? [])
+    .filter((img) => keptImageIds.includes(img.id))
+    .sort((a, b) => a.position - b.position);
+
+  for (let i = 0; i < keptImagesInOrder.length; i++) {
+    if (keptImagesInOrder[i].position !== i) {
+      await supabase.from("listing_images").update({ position: i }).eq("id", keptImagesInOrder[i].id);
+    }
   }
 
   const { failedCount } = await uploadNewPhotos(
