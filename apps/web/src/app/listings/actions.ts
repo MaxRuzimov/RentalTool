@@ -11,8 +11,6 @@ export type ListingActionState = {
   message?: string;
 };
 
-export const initialListingActionState: ListingActionState = { status: "idle" };
-
 const CATEGORY_VALUES = new Set<string>(LISTING_CATEGORIES.map((c) => c.value));
 const PRICE_UNIT_VALUES = new Set<string>(PRICE_UNITS.map((u) => u.value));
 
