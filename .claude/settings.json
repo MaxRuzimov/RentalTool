@@ -11,7 +11,9 @@
       "Bash(npm pack *)",
       "Bash(tar tzf *)",
       "Bash(tar xzf *)",
-      "Bash(git add *)"
+      "Bash(git add *)",
+      "Bash(git merge --no-ff m1-project-skeleton -m ' *)",
+      "Bash(git commit *)"
     ]
   }
 }
