@@ -34,7 +34,7 @@ function isValidPriceUnit(value: string | undefined): value is PriceUnit {
 function parseValidPrice(value: string | undefined): number | undefined {
   if (!value) return undefined;
   const n = Number(value);
-  if (Number.isNaN(n) || n < 0) return undefined;
+  if (!Number.isFinite(n) || n < 0) return undefined;
   return n;
 }
 
