@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { LISTING_CATEGORIES, PRICE_UNITS } from "@/lib/listings/categories";
+import { MAX_IMAGES } from "@/lib/listings/images";
 
 export type ListingActionState = {
   status: "idle" | "error";
@@ -61,6 +62,18 @@ function parseListingFields(formData: FormData): { values: ParsedListingFields }
   return {
     values: { title, description, category, price_amount, price_unit, location },
   };
+}
+
+/**
+ * Pulls real uploaded files out of a FormData field, filtering out both
+ * non-File entries and the empty placeholder File some browsers submit for
+ * a file input with nothing selected (see the same check in
+ * uploadNewPhotos below).
+ */
+function realFilesFrom(formData: FormData, field: string): File[] {
+  return formData
+    .getAll(field)
+    .filter((f): f is File => f instanceof File && f.size > 0);
 }
 
 function extensionFor(file: File): string {
@@ -144,6 +157,16 @@ export async function createListing(formData: FormData): Promise<ListingActionSt
     return { status: "error", message: parsed.error };
   }
 
+  // Client-side (ListingForm) already enforces this cap, but that's only a
+  // UX nicety — a request built by hand (or a client bug) can still submit
+  // more, so the server action is the actual enforcement boundary. Checked
+  // before creating the listing row so an over-cap submission doesn't leave
+  // behind a listing with no photos attached.
+  const newPhotos = realFilesFrom(formData, "new_photos");
+  if (newPhotos.length > MAX_IMAGES) {
+    return { status: "error", message: `You can upload at most ${MAX_IMAGES} photos per listing.` };
+  }
+
   const { data: listing, error } = await supabase
     .from("listings")
     .insert({ owner_id: user.id, ...parsed.values })
@@ -155,7 +178,6 @@ export async function createListing(formData: FormData): Promise<ListingActionSt
     return { status: "error", message: "Could not publish your listing. Please try again." };
   }
 
-  const newPhotos = formData.getAll("new_photos").filter((f): f is File => f instanceof File);
   const { failedCount } = await uploadNewPhotos(supabase, user.id, listing.id, newPhotos, 0);
 
   if (failedCount > 0) {
@@ -210,6 +232,16 @@ export async function updateListing(
   // deleted from Storage + the table now (spec §4 "removal is queued...
   // only actually deleted ... on form submit").
   const keptImageIds = formData.getAll("kept_image_id").map(String);
+  const newPhotos = realFilesFrom(formData, "new_photos");
+
+  // Same server-side cap enforcement as createListing (client-side
+  // ListingForm cap is UX only, not the security/data-integrity boundary).
+  // Checked before any Storage/DB writes below (image removal, upload) so
+  // an over-cap submission is rejected cleanly rather than partially
+  // applied.
+  if (keptImageIds.length + newPhotos.length > MAX_IMAGES) {
+    return { status: "error", message: `You can upload at most ${MAX_IMAGES} photos per listing.` };
+  }
 
   const { data: currentImages } = await supabase
     .from("listing_images")
@@ -230,7 +262,6 @@ export async function updateListing(
       );
   }
 
-  const newPhotos = formData.getAll("new_photos").filter((f): f is File => f instanceof File);
   const { failedCount } = await uploadNewPhotos(
     supabase,
     user.id,
