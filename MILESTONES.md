@@ -7,7 +7,7 @@ Status qiymatlari: Not started / In progress / In review / Done
 | M1 | Loyiha skeleti: repo, Supabase, CI/CD asosi | Done |
 | M2 | Auth: ro'yxatdan o'tish, kirish, profil | Done |
 | M3 | Tool listing: e'lon qo'shish/tahrirlash, rasm yuklash | Done |
-| M4 | Qidiruv va filtrlash (kategoriya, joylashuv, narx) | Not started |
+| M4 | Qidiruv va filtrlash (kategoriya, joylashuv, narx) | Done |
 | M5 | Booking flow: ijaraga so'rov, taqvim, status | Not started |
 | M6 | Reyting va sharh (review) tizimi | Not started |
 | M7 | Web UI polish — responsive dizayn | Not started |
