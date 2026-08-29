@@ -77,7 +77,7 @@ export default function SignupPage() {
       <div className="w-full max-w-sm rounded-2xl border border-black/[.08] bg-white p-8 dark:border-white/[.145] dark:bg-[#0a0a0a]">
         <h1 className="text-2xl font-semibold text-foreground">Sign up</h1>
 
-        <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4" noValidate>
+        <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4">
           <div className="flex flex-col gap-1">
             <label htmlFor="full_name" className="text-sm font-medium text-foreground">
               Full name
