@@ -6,9 +6,14 @@ import LoginForm from "./LoginForm";
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ redirectTo?: string }>;
+  // Next.js gives a string[] for a repeated query param (?redirectTo=a&redirectTo=b),
+  // not just a string — guard the type before it reaches safeRedirectTarget's
+  // string-only checks in LoginForm.
+  searchParams: Promise<{ redirectTo?: string | string[] }>;
 }) {
   const { redirectTo } = await searchParams;
 
-  return <LoginForm redirectTo={redirectTo} />;
+  return (
+    <LoginForm redirectTo={typeof redirectTo === "string" ? redirectTo : undefined} />
+  );
 }

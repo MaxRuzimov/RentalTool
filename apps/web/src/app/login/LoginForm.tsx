@@ -8,13 +8,18 @@ import { createClient } from "@/lib/supabase/client";
 /**
  * Only redirect to a same-origin relative path. `redirectTo` comes from a
  * URL query param, so treat it as untrusted input rather than following it
- * blindly (avoids an open-redirect via `//evil.com` or `https://evil.com`).
+ * blindly. Beyond blocking `//evil.com` and `https://evil.com`, this also
+ * rejects a leading backslash (e.g. `/\evil.com`): WHATWG URL parsing (which
+ * Next's router relies on) treats `\` as equivalent to `/` for special
+ * schemes, so `new URL("/\\evil.com", "https://yourapp.com")` resolves to
+ * `https://evil.com/` — an open redirect if left unblocked. Any backslash
+ * anywhere in the value is rejected, not just a leading one, since encoded
+ * or embedded variants (`/%5Cevil.com`) decode to the same trick.
  */
 function safeRedirectTarget(redirectTo: string | undefined): string {
-  if (redirectTo && redirectTo.startsWith("/") && !redirectTo.startsWith("//")) {
-    return redirectTo;
-  }
-  return "/";
+  if (!redirectTo) return "/";
+  if (!/^\/(?!\/|\\)[^\s\\]*$/.test(redirectTo)) return "/";
+  return redirectTo;
 }
 
 export default function LoginForm({ redirectTo }: { redirectTo?: string }) {
