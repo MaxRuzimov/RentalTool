@@ -18,6 +18,7 @@ export default function SignupPage() {
   const [confirmTouched, setConfirmTouched] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<ReactNode>(null);
+  const [confirmationPending, setConfirmationPending] = useState(false);
 
   const passwordsMismatch =
     confirmTouched && confirmPassword.length > 0 && confirmPassword !== password;
@@ -39,7 +40,7 @@ export default function SignupPage() {
 
     setSubmitting(true);
     const supabase = createClient();
-    const { error: signUpError } = await supabase.auth.signUp({
+    const { data, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
       options: { data: { full_name: trimmedFullName } },
@@ -66,10 +67,22 @@ export default function SignupPage() {
       return;
     }
 
-    // Email confirmation is disabled locally, so signUp() returns an active
-    // session immediately (see spec §0) — go straight to the profile page.
-    router.push("/profile");
-    router.refresh();
+    // Whether signUp() returns an active session depends on the project's
+    // email-confirmation setting: locally (auth.email.enable_confirmations
+    // = false in supabase/config.toml, see spec §0) it's returned
+    // immediately and we can go straight to the profile page. On a hosted
+    // project with confirmations enabled (the default there), signUp()
+    // succeeds with no error but `data.session` is null until the user
+    // clicks the confirmation link — redirecting to /profile in that case
+    // would just bounce them to /login with no explanation, so show a
+    // "check your email" message instead.
+    if (data.session) {
+      router.push("/profile");
+      router.refresh();
+      return;
+    }
+
+    setConfirmationPending(true);
   }
 
   return (
@@ -77,85 +90,91 @@ export default function SignupPage() {
       <div className="w-full max-w-sm rounded-2xl border border-black/[.08] bg-white p-8 dark:border-white/[.145] dark:bg-[#0a0a0a]">
         <h1 className="text-2xl font-semibold text-foreground">Sign up</h1>
 
-        <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4">
-          <div className="flex flex-col gap-1">
-            <label htmlFor="full_name" className="text-sm font-medium text-foreground">
-              Full name
-            </label>
-            <input
-              id="full_name"
-              name="full_name"
-              type="text"
-              required
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              placeholder="Your full name"
-              className="rounded-lg border border-black/[.08] bg-transparent px-3 py-2 text-sm text-foreground dark:border-white/[.145]"
-            />
-          </div>
+        {confirmationPending ? (
+          <p className="mt-6 text-sm text-green-600">
+            Account created! Check your email to confirm your account, then log in.
+          </p>
+        ) : (
+          <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4">
+            <div className="flex flex-col gap-1">
+              <label htmlFor="full_name" className="text-sm font-medium text-foreground">
+                Full name
+              </label>
+              <input
+                id="full_name"
+                name="full_name"
+                type="text"
+                required
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                placeholder="Your full name"
+                className="rounded-lg border border-black/[.08] bg-transparent px-3 py-2 text-sm text-foreground dark:border-white/[.145]"
+              />
+            </div>
 
-          <div className="flex flex-col gap-1">
-            <label htmlFor="email" className="text-sm font-medium text-foreground">
-              Email
-            </label>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
-              className="rounded-lg border border-black/[.08] bg-transparent px-3 py-2 text-sm text-foreground dark:border-white/[.145]"
-            />
-          </div>
+            <div className="flex flex-col gap-1">
+              <label htmlFor="email" className="text-sm font-medium text-foreground">
+                Email
+              </label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
+                className="rounded-lg border border-black/[.08] bg-transparent px-3 py-2 text-sm text-foreground dark:border-white/[.145]"
+              />
+            </div>
 
-          <div className="flex flex-col gap-1">
-            <label htmlFor="password" className="text-sm font-medium text-foreground">
-              Password
-            </label>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              required
-              minLength={6}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="rounded-lg border border-black/[.08] bg-transparent px-3 py-2 text-sm text-foreground dark:border-white/[.145]"
-            />
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">At least 6 characters.</p>
-          </div>
+            <div className="flex flex-col gap-1">
+              <label htmlFor="password" className="text-sm font-medium text-foreground">
+                Password
+              </label>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                required
+                minLength={6}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="rounded-lg border border-black/[.08] bg-transparent px-3 py-2 text-sm text-foreground dark:border-white/[.145]"
+              />
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">At least 6 characters.</p>
+            </div>
 
-          <div className="flex flex-col gap-1">
-            <label htmlFor="confirm_password" className="text-sm font-medium text-foreground">
-              Confirm password
-            </label>
-            <input
-              id="confirm_password"
-              name="confirm_password"
-              type="password"
-              required
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              onBlur={() => setConfirmTouched(true)}
-              className="rounded-lg border border-black/[.08] bg-transparent px-3 py-2 text-sm text-foreground dark:border-white/[.145]"
-            />
-            {passwordsMismatch && (
-              <p className="text-xs text-red-600">Passwords do not match.</p>
-            )}
-          </div>
+            <div className="flex flex-col gap-1">
+              <label htmlFor="confirm_password" className="text-sm font-medium text-foreground">
+                Confirm password
+              </label>
+              <input
+                id="confirm_password"
+                name="confirm_password"
+                type="password"
+                required
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                onBlur={() => setConfirmTouched(true)}
+                className="rounded-lg border border-black/[.08] bg-transparent px-3 py-2 text-sm text-foreground dark:border-white/[.145]"
+              />
+              {passwordsMismatch && (
+                <p className="text-xs text-red-600">Passwords do not match.</p>
+              )}
+            </div>
 
-          {error && <p className="text-sm text-red-600">{error}</p>}
+            {error && <p className="text-sm text-red-600">{error}</p>}
 
-          <button
-            type="submit"
-            disabled={submitting}
-            className="mt-2 flex h-11 w-full items-center justify-center rounded-full bg-foreground px-5 text-sm font-medium text-background transition-colors hover:bg-[#383838] disabled:opacity-50 dark:hover:bg-[#ccc]"
-          >
-            {submitting ? "Signing up…" : "Sign up"}
-          </button>
-        </form>
+            <button
+              type="submit"
+              disabled={submitting}
+              className="mt-2 flex h-11 w-full items-center justify-center rounded-full bg-foreground px-5 text-sm font-medium text-background transition-colors hover:bg-[#383838] disabled:opacity-50 dark:hover:bg-[#ccc]"
+            >
+              {submitting ? "Signing up…" : "Sign up"}
+            </button>
+          </form>
+        )}
 
         <p className="mt-6 text-center text-sm text-zinc-600 dark:text-zinc-400">
           Already have an account?{" "}
