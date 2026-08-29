@@ -13,13 +13,24 @@ create table public.profiles (
 
 alter table public.profiles enable row level security;
 
-create policy "Profiles are viewable by everyone"
+-- Base table (with phone) is only readable by its owner. Other users see the
+-- public_profiles view below, which excludes phone. Phone gets surfaced to a
+-- counterparty later (M5 booking flow), not exposed to every anon/auth client.
+create policy "Users can view their own full profile"
   on public.profiles for select
-  using (true);
+  using (auth.uid() = id);
 
 create policy "Users can update their own profile"
   on public.profiles for update
   using (auth.uid() = id);
+
+-- security_invoker defaults to false: the view runs as its (superuser) owner,
+-- so it bypasses the owner-only RLS policy above and exposes these columns to everyone.
+create view public.public_profiles as
+  select id, full_name, avatar_url, city, created_at
+  from public.profiles;
+
+grant select on public.public_profiles to anon, authenticated;
 
 -- Auto-create a profile row whenever a new auth user signs up.
 create function public.handle_new_user()

@@ -2,7 +2,16 @@
   "permissions": {
     "allow": [
       "Bash(npm install *)",
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "Bash(git rm *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git fetch *)",
+      "Bash(npm view *)",
+      "Bash(npm info *)",
+      "Bash(npm pack *)",
+      "Bash(tar tzf *)",
+      "Bash(tar xzf *)",
+      "Bash(git add *)"
     ]
   }
 }
