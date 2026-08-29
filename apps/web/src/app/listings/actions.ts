@@ -218,27 +218,29 @@ export async function updateListing(
     return { status: "error", message: parsed.error };
   }
 
-  const { error } = await supabase.from("listings").update(parsed.values).eq("id", listingId);
-
-  if (error) {
-    console.error(error);
-    return { status: "error", message: "Could not save changes. Please try again." };
-  }
-
   // Images the user kept in the preview grid (in display order); anything
   // in listing_images not in this set was removed client-side and should be
-  // deleted from Storage + the table now (spec §4 "removal is queued...
-  // only actually deleted ... on form submit").
+  // deleted from Storage + the table further down (spec §4 "removal is
+  // queued... only actually deleted ... on form submit").
   const keptImageIds = formData.getAll("kept_image_id").map(String);
   const newPhotos = realFilesFrom(formData, "new_photos");
 
   // Same server-side cap enforcement as createListing (client-side
   // ListingForm cap is UX only, not the security/data-integrity boundary).
-  // Checked before any Storage/DB writes below (image removal, upload) so
-  // an over-cap submission is rejected cleanly rather than partially
-  // applied.
+  // Checked before the listings.update() below — and before any
+  // Storage/DB writes further down (image removal, upload) — so an
+  // over-cap submission is rejected cleanly with nothing written, rather
+  // than silently saving the text-field changes and only then erroring on
+  // the photos.
   if (keptImageIds.length + newPhotos.length > MAX_IMAGES) {
     return { status: "error", message: `You can upload at most ${MAX_IMAGES} photos per listing.` };
+  }
+
+  const { error } = await supabase.from("listings").update(parsed.values).eq("id", listingId);
+
+  if (error) {
+    console.error(error);
+    return { status: "error", message: "Could not save changes. Please try again." };
   }
 
   const { data: currentImages } = await supabase
