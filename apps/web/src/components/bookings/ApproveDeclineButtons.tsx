@@ -49,7 +49,7 @@ export default function ApproveDeclineButtons({ bookingId }: { bookingId: string
           type="button"
           onClick={handleApprove}
           disabled={pending !== null}
-          className="flex h-9 items-center justify-center rounded-full bg-foreground px-4 text-sm font-medium text-background transition-colors hover:bg-[#383838] disabled:opacity-50 dark:hover:bg-[#ccc]"
+          className="flex h-10 items-center justify-center rounded-full bg-foreground px-4 text-sm font-medium text-background transition-colors hover:bg-[#383838] disabled:opacity-50 dark:hover:bg-[#ccc]"
         >
           {pending === "approve" ? "Approving…" : "Approve"}
         </button>
@@ -57,7 +57,7 @@ export default function ApproveDeclineButtons({ bookingId }: { bookingId: string
           type="button"
           onClick={handleDecline}
           disabled={pending !== null}
-          className="flex h-9 items-center justify-center rounded-full border border-solid border-red-600/30 px-4 text-sm font-medium text-red-600 transition-colors hover:bg-red-600/5 disabled:opacity-50"
+          className="flex h-10 items-center justify-center rounded-full border border-solid border-red-600/30 px-4 text-sm font-medium text-red-600 transition-colors hover:bg-red-600/5 disabled:opacity-50"
         >
           {pending === "decline" ? "Declining…" : "Decline"}
         </button>

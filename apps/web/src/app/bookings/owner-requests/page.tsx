@@ -134,7 +134,7 @@ export default async function OwnerRequestsPage() {
       </div>
 
       {bookings.length === 0 ? (
-        <div className="mt-8 flex flex-col items-center gap-2 rounded-2xl border border-black/[.08] py-16 text-center dark:border-white/[.145]">
+        <div className="mt-8 flex flex-col items-center gap-4 rounded-2xl border border-black/[.08] py-16 text-center dark:border-white/[.145]">
           <p className="text-foreground">No booking requests yet.</p>
           <p className="text-sm text-zinc-500 dark:text-zinc-400">
             Requests to rent your listings will show up here.

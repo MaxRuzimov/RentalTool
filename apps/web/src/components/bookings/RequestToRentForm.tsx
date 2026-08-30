@@ -84,7 +84,7 @@ export default function RequestToRentForm({
       <h2 className="text-sm font-semibold text-foreground">Request to rent this tool</h2>
 
       <form onSubmit={handleSubmit} className="mt-3 flex flex-col gap-3">
-        <div className="flex gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row">
           <div className="flex flex-1 flex-col gap-1">
             <label htmlFor="start_date" className="text-sm font-medium text-foreground">
               Start date

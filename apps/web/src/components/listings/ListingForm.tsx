@@ -211,7 +211,7 @@ export default function ListingForm({
             </select>
           </div>
 
-          <div className="flex gap-3">
+          <div className="flex flex-col gap-3 sm:flex-row">
             <div className="flex flex-1 flex-col gap-1">
               <label htmlFor="price_amount" className="text-sm font-medium text-foreground">
                 Price
