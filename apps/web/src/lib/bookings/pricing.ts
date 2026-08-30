@@ -47,10 +47,25 @@ export function formatMoney(amount: number): string {
   return `$${amount.toFixed(2)}`;
 }
 
-/** Today's date as a `YYYY-MM-DD` string, for the date inputs' `min` and
- * for server-side "start date can't be in the past" validation. */
+const TARGET_MARKET_TIME_ZONE = "America/Toronto";
+const LOCAL_DATE_FORMAT = new Intl.DateTimeFormat("en-CA", { timeZone: TARGET_MARKET_TIME_ZONE });
+
+/**
+ * Today's date as a `YYYY-MM-DD` string, for the date inputs' `min` and for
+ * server-side "start date can't be in the past" validation.
+ *
+ * Deliberately NOT `new Date().toISOString().slice(0, 10)` — that's always
+ * UTC, and the GTA (per PROJECT_BRIEF.md's target market) is UTC-4/UTC-5.
+ * Roughly 8pm–midnight local time, UTC has already rolled over to
+ * tomorrow's date, which would reject a legitimate same-day booking (or
+ * silently compute "today" as tomorrow) every evening. `en-CA` formats as
+ * `YYYY-MM-DD` directly, so no manual zero-padding is needed. Both the
+ * client (RequestToRentForm's `min` attrs) and server
+ * (bookings/actions.ts's parseDates) call this same function, so they can
+ * never disagree with each other.
+ */
 export function todayISODate(): string {
-  return new Date().toISOString().slice(0, 10);
+  return LOCAL_DATE_FORMAT.format(new Date());
 }
 
 const MONTH_DAY = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", timeZone: "UTC" });

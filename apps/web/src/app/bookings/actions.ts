@@ -311,5 +311,6 @@ export async function declineBooking(bookingId: string): Promise<BookingActionSt
   }
 
   revalidatePath("/bookings/owner-requests");
+  revalidatePath("/bookings/mine");
   return { status: "success" };
 }

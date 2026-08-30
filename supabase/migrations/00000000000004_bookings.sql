@@ -76,15 +76,14 @@ create policy "Renters can insert their own bookings"
   on public.bookings for insert
   with check (auth.uid() = renter_id);
 
--- Renter can update their own booking's status. This RLS policy alone does
--- not restrict *which* status transitions are legal (Postgres RLS has no
--- access to the OLD row's column values in a plain USING/WITH CHECK clause
--- without a trigger) — the actual transition rules (spec §1: renter may
--- move pending/approved -> cancelled only) are enforced in the
--- cancelBooking server action before the UPDATE runs, per spec §2's
--- explicitly-allowed "server action with explicit ownership/state check"
--- convention. RLS here is the row-ownership boundary; the action is the
--- state-machine boundary.
+-- Renter can update their own booking's status. This RLS policy is only the
+-- row-ownership boundary (can this user even target this row at all) — the
+-- full spec §1 transition table (which status -> status moves are legal,
+-- who's allowed to make them, and that non-status columns are immutable)
+-- is enforced by the bookings_enforce_transition BEFORE UPDATE trigger
+-- below, which runs regardless of which RLS policy let the UPDATE through.
+-- Row ownership (via USING) and transition legality (via the trigger) are
+-- deliberately two separate layers, not folded into one WITH CHECK clause.
 create policy "Renters can update their own bookings"
   on public.bookings for update
   using (auth.uid() = renter_id)
@@ -103,8 +102,8 @@ create policy "Listing owners can view bookings on their listings"
 
 -- Listing owner can update status on bookings against their own listings
 -- (approve/decline a pending request, or cancel an approved one). Same note
--- as the renter update policy above: transition legality is enforced in the
--- approveBooking/declineBooking/cancelBooking server actions, not here.
+-- as the renter update policy above: this is the row-ownership boundary
+-- only — transition legality is enforced by the trigger below.
 create policy "Listing owners can update bookings on their listings"
   on public.bookings for update
   using (
@@ -123,6 +122,76 @@ create policy "Listing owners can update bookings on their listings"
 -- No delete policy for either party (spec §2): cancelling is a status
 -- change, not a row deletion, so history stays intact for §5/§6's "History"
 -- sections.
+
+-- ---------------------------------------------------------------------------
+-- Transition enforcement (spec §1) — BEFORE UPDATE trigger, not RLS alone.
+--
+-- The two UPDATE RLS policies above only gate row *ownership* (is this
+-- caller the renter, or the owning listing's owner). Since `bookings` is a
+-- table both parties' browser sessions can PATCH directly via PostgREST
+-- (not just through the app's server actions), row ownership alone is not
+-- enough: without this, a renter could self-approve their own `pending`
+-- request (and thereby unlock booking_contact() early), rewrite
+-- `listing_id` on their own row to fabricate an "approved" booking against
+-- a listing they don't own, edit dates on an already-approved booking with
+-- no checkpoint-2 re-check, or an owner could move `approved` -> `declined`
+-- (not a valid transition per spec §1). This trigger is the actual
+-- enforcement of the full transition table plus column immutability,
+-- independent of which RLS policy let a given UPDATE attempt through.
+create function public.bookings_enforce_transition()
+returns trigger
+language plpgsql
+as $$
+declare
+  caller_is_owner boolean;
+begin
+  -- Only `status` (and `updated_at`, maintained by set_updated_at below)
+  -- may ever change via UPDATE. Spec §10 explicitly has no "edit an
+  -- existing request" affordance — a renter who wants different dates
+  -- cancels and creates a new request instead.
+  if new.listing_id is distinct from old.listing_id
+     or new.renter_id is distinct from old.renter_id
+     or new.start_date is distinct from old.start_date
+     or new.end_date is distinct from old.end_date
+     or new.created_at is distinct from old.created_at
+  then
+    raise exception 'bookings: only status may be changed by an update';
+  end if;
+
+  if new.status = old.status then
+    raise exception 'bookings: % -> % is not a status change', old.status, new.status;
+  end if;
+
+  caller_is_owner := exists (
+    select 1 from public.listings l
+    where l.id = old.listing_id and l.owner_id = auth.uid()
+  );
+
+  -- Spec §1's transition table, exactly:
+  --   pending  -> approved   : owner only
+  --   pending  -> declined   : owner only
+  --   pending  -> cancelled  : renter only
+  --   approved -> cancelled  : renter or owner
+  -- Every other (old, new) pair — including approved -> declined, and any
+  -- move out of the terminal declined/cancelled states — is rejected.
+  if old.status = 'pending' and new.status = 'approved' and caller_is_owner then
+    return new;
+  elsif old.status = 'pending' and new.status = 'declined' and caller_is_owner then
+    return new;
+  elsif old.status = 'pending' and new.status = 'cancelled' and auth.uid() = old.renter_id then
+    return new;
+  elsif old.status = 'approved' and new.status = 'cancelled'
+    and (auth.uid() = old.renter_id or caller_is_owner) then
+    return new;
+  else
+    raise exception 'bookings: % -> % is not a valid transition for this caller', old.status, new.status;
+  end if;
+end;
+$$;
+
+create trigger bookings_enforce_transition
+  before update on public.bookings
+  for each row execute procedure public.bookings_enforce_transition();
 
 create trigger set_bookings_updated_at
   before update on public.bookings
