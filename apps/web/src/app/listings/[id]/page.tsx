@@ -6,6 +6,8 @@ import { categoryLabel, formatPrice } from "@/lib/listings/categories";
 import ImagePlaceholder from "@/components/listings/ImagePlaceholder";
 import OwnerAvatar from "@/components/listings/OwnerAvatar";
 import RequestToRentForm from "@/components/bookings/RequestToRentForm";
+import StarRating from "@/components/reviews/StarRating";
+import ReviewsList, { type ReviewListItem } from "@/components/reviews/ReviewsList";
 
 // Public page (spec §5.5): RLS's "Anyone can view published listings" policy
 // (plus the owner-only policy, for the owner's own view) is what actually
@@ -58,6 +60,37 @@ export default async function ListingDetailPage({
     .maybeSingle();
 
   const isOwner = user?.id === listing.owner_id;
+
+  // Reviews (spec §6): one query for the ordered list, joined to
+  // public_profiles for the reviewer's display name (same view used for the
+  // owner block above — no new profile-visibility surface); the aggregate
+  // average/count is derived client-side from that same result set rather
+  // than a second round trip, since M6 has no pagination (spec §6.2) so the
+  // full list is already in hand.
+  const { data: reviewRows } = await supabase
+    .from("reviews")
+    .select("id, rating, comment, created_at, renter_id")
+    .eq("listing_id", id)
+    .order("created_at", { ascending: false });
+
+  const reviewerIds = [...new Set((reviewRows ?? []).map((r) => r.renter_id))];
+  const { data: reviewers } =
+    reviewerIds.length > 0
+      ? await supabase.from("public_profiles").select("id, full_name").in("id", reviewerIds)
+      : { data: [] as { id: string; full_name: string | null }[] };
+  const nameByReviewerId = new Map((reviewers ?? []).map((r) => [r.id, r.full_name]));
+
+  const reviews: ReviewListItem[] = (reviewRows ?? []).map((r) => ({
+    id: r.id,
+    rating: r.rating,
+    comment: r.comment,
+    createdAt: r.created_at,
+    reviewerName: nameByReviewerId.get(r.renter_id) ?? null,
+  }));
+
+  const reviewCount = reviews.length;
+  const averageRating =
+    reviewCount > 0 ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviewCount : 0;
 
   return (
     <div className="mx-auto w-full max-w-3xl flex-1 px-4 py-12">
@@ -113,6 +146,17 @@ export default async function ListingDetailPage({
         {categoryLabel(listing.category)} · {listing.location}
       </p>
 
+      {reviewCount > 0 ? (
+        <div className="mt-1 flex items-center gap-1.5">
+          <StarRating rating={averageRating} size="sm" />
+          <span className="text-sm text-foreground">
+            {averageRating.toFixed(1)} ({reviewCount} review{reviewCount === 1 ? "" : "s"})
+          </span>
+        </div>
+      ) : (
+        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">No reviews yet</p>
+      )}
+
       <p className="mt-6 whitespace-pre-line text-sm text-foreground">{listing.description}</p>
 
       <div className="mt-8 flex items-center gap-3 border-t border-black/[.08] pt-6 dark:border-white/[.145]">
@@ -148,6 +192,10 @@ export default async function ListingDetailPage({
             loginRedirectTo={`/listings/${listing.id}`}
           />
         )}
+      </div>
+
+      <div className="mt-10 border-t border-black/[.08] pt-6 dark:border-white/[.145]">
+        <ReviewsList reviews={reviews} />
       </div>
     </div>
   );

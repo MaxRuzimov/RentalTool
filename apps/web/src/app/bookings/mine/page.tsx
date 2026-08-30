@@ -5,6 +5,8 @@ import { signImageUrls } from "@/lib/listings/storage";
 import BookingListingRow from "@/components/bookings/BookingListingRow";
 import CancelBookingButton from "@/components/bookings/CancelBookingButton";
 import ContactInfo from "@/components/bookings/ContactInfo";
+import ReviewRowSlot from "@/components/reviews/ReviewRowSlot";
+import { todayISODate } from "@/lib/bookings/pricing";
 
 const BROWSE_BUTTON =
   "flex h-10 items-center justify-center rounded-full bg-foreground px-5 text-sm font-medium text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc]";
@@ -74,6 +76,19 @@ export default async function MyBookingsPage({
     }),
   );
 
+  // Review row state (M6 spec §7.1) — own reviews are always readable via
+  // RLS's "Reviewers can view their own reviews" policy regardless of the
+  // listing's current status, so a single query covers every row on this
+  // page.
+  const { data: reviewRows } = await supabase
+    .from("reviews")
+    .select("booking_id, rating, comment")
+    .eq("renter_id", user.id);
+  const reviewByBookingId = new Map(
+    (reviewRows ?? []).map((r) => [r.booking_id, { rating: r.rating, comment: r.comment }]),
+  );
+  const today = todayISODate();
+
   return (
     <div className="mx-auto w-full max-w-3xl flex-1 px-4 py-12">
       <h1 className="text-2xl font-semibold text-foreground">My bookings</h1>
@@ -107,6 +122,16 @@ export default async function MyBookingsPage({
             const canCancel = booking.status === "pending" || booking.status === "approved";
             const contact = contactByBookingId.get(booking.id);
 
+            // Review slot (spec §7.1) — mutually exclusive with the M5
+            // ContactInfo line in the same slot: contact only shows while
+            // `approved` and still ongoing; review only shows once the
+            // rental is over (exact eligibility predicate mirrored from
+            // spec §2 / RLS / createReview: end_date < today, not <=).
+            const existingReview = reviewByBookingId.get(booking.id) ?? null;
+            const reviewEligible =
+              !existingReview && booking.status === "approved" && booking.end_date < today;
+            const showReviewSlot = Boolean(existingReview) || reviewEligible;
+
             return (
               <BookingListingRow
                 key={booking.id}
@@ -120,7 +145,13 @@ export default async function MyBookingsPage({
                 status={booking.status}
                 actions={canCancel ? <CancelBookingButton bookingId={booking.id} /> : undefined}
                 contact={
-                  booking.status === "approved" ? (
+                  showReviewSlot ? (
+                    <ReviewRowSlot
+                      bookingId={booking.id}
+                      eligible={reviewEligible}
+                      review={existingReview}
+                    />
+                  ) : booking.status === "approved" ? (
                     <ContactInfo fullName={contact?.full_name ?? null} phone={contact?.phone ?? null} />
                   ) : undefined
                 }
