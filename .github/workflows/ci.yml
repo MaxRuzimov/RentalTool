@@ -22,3 +22,23 @@ jobs:
       - run: npm run lint --workspace=web
 
       - run: npm run build --workspace=web
+
+  mobile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      # No apps/mobile/.env.local in CI (gitignored, same as apps/web/.env.local) —
+      # app.config.ts only warns (not fails) when the EXPO_PUBLIC_* vars are
+      # missing, and neither lint nor typecheck depend on their actual values,
+      # so both run clean without them (verified locally before adding this job).
+      - run: npm run lint --workspace=mobile
+
+      - run: npm run typecheck --workspace=mobile
