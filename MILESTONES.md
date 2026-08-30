@@ -9,7 +9,7 @@ Status qiymatlari: Not started / In progress / In review / Done
 | M3 | Tool listing: e'lon qo'shish/tahrirlash, rasm yuklash | Done |
 | M4 | Qidiruv va filtrlash (kategoriya, joylashuv, narx) | Done |
 | M5 | Booking flow: ijaraga so'rov, taqvim, status | Done |
-| M6 | Reyting va sharh (review) tizimi | Not started |
+| M6 | Reyting va sharh (review) tizimi | Done |
 | M7 | Web UI polish — responsive dizayn | Not started |
 | M8 | Mobil ilova (Expo) — asosiy ekranlar | Not started |
 | M9 | QA — to'liq test va bug-fix bosqichi | Not started |
