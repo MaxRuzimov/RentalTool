@@ -5,6 +5,7 @@ import { signImageUrls } from "@/lib/listings/storage";
 import { categoryLabel, formatPrice } from "@/lib/listings/categories";
 import ImagePlaceholder from "@/components/listings/ImagePlaceholder";
 import OwnerAvatar from "@/components/listings/OwnerAvatar";
+import RequestToRentForm from "@/components/bookings/RequestToRentForm";
 
 // Public page (spec §5.5): RLS's "Anyone can view published listings" policy
 // (plus the owner-only policy, for the owner's own view) is what actually
@@ -126,7 +127,28 @@ export default async function ListingDetailPage({
         </div>
       </div>
 
-      <p className="mt-4 text-xs text-zinc-400 dark:text-zinc-500">Contact details coming soon</p>
+      <div className="mt-6">
+        {isOwner ? (
+          // Spec §3.1.C: an owner requesting their own tool is meaningless
+          // (and the server action rejects it anyway as a backstop) — a
+          // small note in the same vertical slot, with a link to where
+          // they'd actually manage requests on this listing.
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">
+            This is your listing.{" "}
+            <Link href="/bookings/owner-requests" className="font-medium text-foreground underline">
+              View requests
+            </Link>
+          </p>
+        ) : (
+          <RequestToRentForm
+            listingId={listing.id}
+            priceAmount={listing.price_amount}
+            priceUnit={listing.price_unit}
+            loggedIn={Boolean(user)}
+            loginRedirectTo={`/listings/${listing.id}`}
+          />
+        )}
+      </div>
     </div>
   );
 }
