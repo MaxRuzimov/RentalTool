@@ -31,8 +31,10 @@ export default function RequestToRentForm({
   loggedIn: boolean;
   loginRedirectTo: string;
 }) {
-  // toISOString() is always UTC, so this is identical whether it runs during
-  // the server render or the client hydration pass — no hydration mismatch.
+  // todayISODate() computes the calendar date in a fixed America/Toronto
+  // zone (Intl.DateTimeFormat), not the machine's local zone, so this is
+  // identical whether it runs during the server render or the client
+  // hydration pass — no hydration mismatch.
   const today = useMemo(() => todayISODate(), []);
   const [startDate, setStartDate] = useState(today);
   const [endDate, setEndDate] = useState(today);
