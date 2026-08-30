@@ -7,8 +7,6 @@ export type ProfileFormState = {
   message?: string;
 };
 
-export const initialProfileFormState: ProfileFormState = { status: "idle" };
-
 /**
  * Saves the current user's editable profile fields in one `update` call
  * (spec §4). RLS's "Users can update their own profile" policy

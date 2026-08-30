@@ -38,6 +38,9 @@ export default async function Header() {
             <Link href="/listings/mine" className="text-foreground hover:underline">
               My listings
             </Link>
+            <Link href="/bookings/mine" className="text-foreground hover:underline">
+              Bookings
+            </Link>
             <Link href="/profile" className="text-foreground hover:underline">
               {fullName || "Account"}
             </Link>

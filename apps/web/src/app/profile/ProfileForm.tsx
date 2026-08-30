@@ -2,7 +2,12 @@
 
 import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
-import { initialProfileFormState, updateProfile } from "./actions";
+import { updateProfile, type ProfileFormState } from "./actions";
+
+// Defined here (not exported from actions.ts) because a "use server" module
+// may only export async functions — a plain const value export silently
+// breaks the whole module at runtime (not caught by lint/tsc).
+const initialProfileFormState: ProfileFormState = { status: "idle" };
 
 function SaveButton() {
   const { pending } = useFormStatus();
