@@ -41,7 +41,7 @@ export default function MyListingCard({ listing }: { listing: ListingCardData })
         </Link>
 
         <div className="min-w-0 flex-1">
-          <Link href={`/listings/${listing.id}`} className="truncate text-sm font-semibold text-foreground hover:underline">
+          <Link href={`/listings/${listing.id}`} className="block truncate text-sm font-semibold text-foreground hover:underline">
             {listing.title}
           </Link>
           <p className="text-xs text-zinc-400 dark:text-zinc-500">{categoryLabel(listing.category)}</p>

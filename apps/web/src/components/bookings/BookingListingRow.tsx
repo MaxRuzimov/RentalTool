@@ -55,7 +55,7 @@ export default function BookingListingRow({
           {topLabel && <p className="text-xs text-zinc-500 dark:text-zinc-400">{topLabel}</p>}
           <Link
             href={`/listings/${listingId}`}
-            className="truncate text-sm font-semibold text-foreground hover:underline"
+            className="block truncate text-sm font-semibold text-foreground hover:underline"
           >
             {listingTitle}
           </Link>
