@@ -35,7 +35,10 @@ export default function StarRating({
   const sizeClass = SIZE_CLASSES[size];
 
   return (
-    <span className={`inline-flex ${sizeClass} leading-none`} aria-label={`${rating} out of 5 stars`}>
+    <span
+      className={`inline-flex ${sizeClass} leading-none ${interactive ? "gap-0.5" : ""}`}
+      aria-label={`${rating} out of 5 stars`}
+    >
       {stars.map((n) => {
         const filled = n <= filledCount;
         const glyph = filled ? "★" : "☆";
@@ -48,7 +51,7 @@ export default function StarRating({
               type="button"
               onClick={() => onChange?.(n)}
               aria-label={`Rate ${n} star${n === 1 ? "" : "s"}`}
-              className={`${colorClass} cursor-pointer`}
+              className={`${colorClass} cursor-pointer p-1.5 -m-1.5`}
             >
               {glyph}
             </button>

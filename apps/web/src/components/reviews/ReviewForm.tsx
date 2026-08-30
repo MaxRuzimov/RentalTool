@@ -6,7 +6,7 @@ import StarRating from "./StarRating";
 import { createReview, type ReviewActionState } from "@/app/reviews/actions";
 
 const PRIMARY_BUTTON =
-  "flex h-9 items-center justify-center rounded-full bg-foreground px-4 text-sm font-medium text-background transition-colors hover:bg-[#383838] disabled:opacity-50 dark:hover:bg-[#ccc]";
+  "flex h-10 items-center justify-center rounded-full bg-foreground px-4 text-sm font-medium text-background transition-colors hover:bg-[#383838] disabled:opacity-50 dark:hover:bg-[#ccc]";
 
 const MAX_COMMENT_LENGTH = 500;
 

@@ -24,12 +24,12 @@ export default async function Header() {
   }
 
   return (
-    <header className="flex items-center justify-between border-b border-black/[.08] px-6 py-4 dark:border-white/[.145]">
+    <header className="flex flex-wrap items-center justify-between gap-y-2 border-b border-black/[.08] px-4 py-4 dark:border-white/[.145] sm:px-6">
       <Link href="/" className="text-base font-semibold text-foreground">
         RentalTool
       </Link>
 
-      <nav className="flex items-center gap-4 text-sm font-medium">
+      <nav className="flex flex-wrap items-center justify-end gap-x-4 gap-y-2 text-sm font-medium">
         <Link href="/listings" className="text-foreground hover:underline">
           Browse listings
         </Link>
@@ -41,7 +41,7 @@ export default async function Header() {
             <Link href="/bookings/mine" className="text-foreground hover:underline">
               Bookings
             </Link>
-            <Link href="/profile" className="text-foreground hover:underline">
+            <Link href="/profile" className="max-w-[10rem] truncate text-foreground hover:underline">
               {fullName || "Account"}
             </Link>
             <form action={logout}>

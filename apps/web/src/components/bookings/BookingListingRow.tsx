@@ -40,47 +40,49 @@ export default function BookingListingRow({
   const estimate = estimatePrice(priceAmount, priceUnit, days);
 
   return (
-    <div className="flex items-start gap-4 rounded-2xl border border-black/[.08] bg-white p-4 dark:border-white/[.145] dark:bg-[#0a0a0a]">
-      <Link href={`/listings/${listingId}`} className="shrink-0">
-        {coverUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={coverUrl} alt="" className="h-20 w-20 rounded-lg object-cover" />
-        ) : (
-          <ImagePlaceholder label={listingTitle} className="h-20 w-20 rounded-lg" />
-        )}
-      </Link>
-
-      <div className="min-w-0 flex-1">
-        {topLabel && <p className="text-xs text-zinc-500 dark:text-zinc-400">{topLabel}</p>}
-        <Link
-          href={`/listings/${listingId}`}
-          className="truncate text-sm font-semibold text-foreground hover:underline"
-        >
-          {listingTitle}
+    <div className="flex flex-col gap-3 rounded-2xl border border-black/[.08] bg-white p-4 dark:border-white/[.145] dark:bg-[#0a0a0a] sm:flex-row sm:items-start sm:gap-4">
+      <div className="flex gap-4 sm:contents">
+        <Link href={`/listings/${listingId}`} className="shrink-0">
+          {coverUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={coverUrl} alt="" className="h-20 w-20 rounded-lg object-cover" />
+          ) : (
+            <ImagePlaceholder label={listingTitle} className="h-20 w-20 rounded-lg" />
+          )}
         </Link>
-        <p className="text-xs text-zinc-500 dark:text-zinc-400">{formatDateRange(startDate, endDate)}</p>
 
-        <p className="mt-1 text-sm text-foreground">
-          {estimate.kind === "exact" && (
-            <>
-              Estimated total: {formatMoney(estimate.total)} for {estimate.days}{" "}
-              {estimate.days === 1 ? "day" : "days"}
-            </>
-          )}
-          {estimate.kind === "rounded_weeks" && (
-            <>
-              Estimated total: {formatMoney(estimate.total)} for {estimate.days}{" "}
-              {estimate.days === 1 ? "day" : "days"} — billed as {estimate.weeks}{" "}
-              {estimate.weeks === 1 ? "week" : "weeks"}
-            </>
-          )}
-          {estimate.kind === "hourly_no_total" && <>{formatMoney(priceAmount)} / hour</>}
-        </p>
+        <div className="min-w-0 flex-1">
+          {topLabel && <p className="text-xs text-zinc-500 dark:text-zinc-400">{topLabel}</p>}
+          <Link
+            href={`/listings/${listingId}`}
+            className="block truncate text-sm font-semibold text-foreground hover:underline"
+          >
+            {listingTitle}
+          </Link>
+          <p className="text-xs text-zinc-500 dark:text-zinc-400">{formatDateRange(startDate, endDate)}</p>
 
-        {contact}
+          <p className="mt-1 text-sm text-foreground">
+            {estimate.kind === "exact" && (
+              <>
+                Estimated total: {formatMoney(estimate.total)} for {estimate.days}{" "}
+                {estimate.days === 1 ? "day" : "days"}
+              </>
+            )}
+            {estimate.kind === "rounded_weeks" && (
+              <>
+                Estimated total: {formatMoney(estimate.total)} for {estimate.days}{" "}
+                {estimate.days === 1 ? "day" : "days"} — billed as {estimate.weeks}{" "}
+                {estimate.weeks === 1 ? "week" : "weeks"}
+              </>
+            )}
+            {estimate.kind === "hourly_no_total" && <>{formatMoney(priceAmount)} / hour</>}
+          </p>
+
+          {contact}
+        </div>
       </div>
 
-      <div className="flex shrink-0 flex-col items-end gap-2">
+      <div className="flex items-center justify-between gap-2 sm:shrink-0 sm:flex-col sm:items-end sm:justify-start">
         <StatusBadge status={status} />
         {actions}
       </div>
