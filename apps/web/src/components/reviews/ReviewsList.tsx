@@ -1,10 +1,14 @@
 import StarRating from "./StarRating";
+import { TARGET_MARKET_TIME_ZONE } from "@/lib/bookings/pricing";
 
+// Formatted in the target market's local zone (not UTC) so a review left in
+// the evening in Toronto doesn't display under the next calendar day — same
+// day-boundary reasoning as pricing.ts's todayISODate().
 const MONTH_DAY_YEAR = new Intl.DateTimeFormat("en-US", {
   month: "short",
   day: "numeric",
   year: "numeric",
-  timeZone: "UTC",
+  timeZone: TARGET_MARKET_TIME_ZONE,
 });
 
 export type ReviewListItem = {

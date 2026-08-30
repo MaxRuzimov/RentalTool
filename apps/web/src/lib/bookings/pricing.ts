@@ -47,7 +47,7 @@ export function formatMoney(amount: number): string {
   return `$${amount.toFixed(2)}`;
 }
 
-const TARGET_MARKET_TIME_ZONE = "America/Toronto";
+export const TARGET_MARKET_TIME_ZONE = "America/Toronto";
 const LOCAL_DATE_FORMAT = new Intl.DateTimeFormat("en-CA", { timeZone: TARGET_MARKET_TIME_ZONE });
 
 /**

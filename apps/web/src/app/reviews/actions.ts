@@ -96,6 +96,13 @@ export async function createReview(
   });
 
   if (error) {
+    // A genuinely concurrent submit (e.g. two tabs) can both pass the
+    // pre-check above and race to this insert — the DB's `unique` constraint
+    // on booking_id (not the pre-check) is the real backstop in that case,
+    // and its violation surfaces here as Postgres error code 23505.
+    if (error.code === "23505") {
+      return { status: "error", message: COPY.duplicate };
+    }
     console.error(error);
     return { status: "error", message: COPY.genericError };
   }
