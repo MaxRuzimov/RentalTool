@@ -39,7 +39,7 @@ function parseValidPrice(value: string | undefined): number | undefined {
 }
 
 const inputClassName =
-  "w-full rounded-lg border border-black/[.08] bg-transparent px-3 py-2 text-sm text-foreground dark:border-white/[.145]";
+  "w-full rounded-lg border border-line bg-transparent px-3 py-2 text-sm text-foreground placeholder:text-zinc-400 outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20 dark:placeholder:text-zinc-500";
 
 export default async function ListingsIndexPage({
   searchParams,
@@ -123,12 +123,12 @@ export default async function ListingsIndexPage({
 
   return (
     <div className="mx-auto w-full max-w-5xl flex-1 px-4 py-12">
-      <h1 className="mb-8 text-2xl font-semibold text-foreground">Browse listings</h1>
+      <h1 className="mb-8 text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">Browse listings</h1>
 
       <form
         method="GET"
         action="/listings"
-        className="mb-6 flex flex-col gap-3 rounded-2xl border border-black/[.08] p-4 dark:border-white/[.145] sm:flex-row sm:flex-wrap sm:items-end sm:gap-3"
+        className="mb-6 flex flex-col gap-3 rounded-2xl border border-line p-4 sm:flex-row sm:flex-wrap sm:items-end sm:gap-3"
       >
         <label className="flex w-full flex-col gap-1 text-sm sm:w-40">
           <span className="font-medium text-foreground">Category</span>
@@ -202,7 +202,7 @@ export default async function ListingsIndexPage({
 
         <button
           type="submit"
-          className="flex h-10 w-full items-center justify-center rounded-full bg-foreground px-5 text-sm font-medium text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] sm:w-auto"
+          className="flex h-10 w-full items-center justify-center rounded-full bg-primary px-5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover active:bg-primary-active focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background sm:w-auto"
         >
           Apply filters
         </button>
@@ -210,7 +210,7 @@ export default async function ListingsIndexPage({
         {hasActiveFilter && (
           <Link
             href="/listings"
-            className="w-full text-center text-sm font-medium text-foreground underline sm:w-auto sm:text-left"
+            className="w-full text-center text-sm font-medium text-accent underline-offset-2 hover:underline hover:text-accent-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-sm sm:w-auto sm:text-left"
           >
             Clear filters
           </Link>
@@ -219,19 +219,22 @@ export default async function ListingsIndexPage({
 
       {cards.length === 0 ? (
         hasActiveFilter ? (
-          <div className="flex flex-col items-center gap-4 rounded-2xl border border-black/[.08] py-16 text-center dark:border-white/[.145]">
+          <div className="flex flex-col items-center gap-4 rounded-2xl border border-line py-16 text-center">
             <p className="text-foreground">No tools match your filters.</p>
             <p className="text-sm text-zinc-500 dark:text-zinc-400">Try adjusting your search.</p>
-            <Link href="/listings" className="text-sm font-medium text-foreground underline">
+            <Link
+              href="/listings"
+              className="text-sm font-medium text-accent underline-offset-2 hover:underline hover:text-accent-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-sm"
+            >
               Clear filters
             </Link>
           </div>
         ) : (
-          <div className="flex flex-col items-center gap-4 rounded-2xl border border-black/[.08] py-16 text-center dark:border-white/[.145]">
+          <div className="flex flex-col items-center gap-4 rounded-2xl border border-line py-16 text-center">
             <p className="text-foreground">No listings yet.</p>
             <Link
               href={user ? "/listings/new" : "/signup"}
-              className="text-sm font-medium text-foreground underline"
+              className="text-sm font-medium text-accent underline-offset-2 hover:underline hover:text-accent-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-sm"
             >
               Be the first to list a tool!
             </Link>

@@ -150,9 +150,9 @@ export default function ListingForm({
   }
 
   return (
-    <div className="flex flex-1 items-center justify-center bg-zinc-50 px-4 py-16 dark:bg-black">
-      <div className="w-full max-w-md rounded-2xl border border-black/[.08] bg-white p-8 dark:border-white/[.145] dark:bg-[#0a0a0a]">
-        <h1 className="text-2xl font-semibold text-foreground">
+    <div className="flex flex-1 items-center justify-center bg-surface-muted px-4 py-16">
+      <div className="w-full max-w-md rounded-2xl border border-line bg-surface p-8">
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
           {mode === "create" ? "List a tool" : "Edit listing"}
         </h1>
 
@@ -169,7 +169,7 @@ export default function ListingForm({
               maxLength={100}
               defaultValue={values.title}
               placeholder="e.g. DeWalt 20V Cordless Drill"
-              className="rounded-lg border border-black/[.08] bg-transparent px-3 py-2 text-sm text-foreground dark:border-white/[.145]"
+              className="w-full rounded-lg border border-line bg-transparent px-3 py-2 text-sm text-foreground placeholder:text-zinc-400 outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20 dark:placeholder:text-zinc-500"
             />
           </div>
 
@@ -185,7 +185,7 @@ export default function ListingForm({
               rows={6}
               defaultValue={values.description}
               placeholder="Condition, accessories included, pickup instructions…"
-              className="rounded-lg border border-black/[.08] bg-transparent px-3 py-2 text-sm text-foreground dark:border-white/[.145]"
+              className="w-full rounded-lg border border-line bg-transparent px-3 py-2 text-sm text-foreground placeholder:text-zinc-400 outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20 dark:placeholder:text-zinc-500"
             />
           </div>
 
@@ -198,7 +198,7 @@ export default function ListingForm({
               name="category"
               required
               defaultValue={values.category}
-              className="rounded-lg border border-black/[.08] bg-transparent px-3 py-2 text-sm text-foreground dark:border-white/[.145]"
+              className="w-full rounded-lg border border-line bg-transparent px-3 py-2 text-sm text-foreground placeholder:text-zinc-400 outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20 dark:placeholder:text-zinc-500"
             >
               <option value="" disabled>
                 Select a category
@@ -216,7 +216,7 @@ export default function ListingForm({
               <label htmlFor="price_amount" className="text-sm font-medium text-foreground">
                 Price
               </label>
-              <div className="flex items-center gap-2 rounded-lg border border-black/[.08] px-3 py-2 dark:border-white/[.145]">
+              <div className="flex items-center gap-2 rounded-lg border border-line px-3 py-2 outline-none focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20">
                 <span className="text-sm text-zinc-500 dark:text-zinc-400">$</span>
                 <input
                   id="price_amount"
@@ -240,7 +240,7 @@ export default function ListingForm({
                 name="price_unit"
                 required
                 defaultValue={values.price_unit}
-                className="rounded-lg border border-black/[.08] bg-transparent px-3 py-2 text-sm text-foreground dark:border-white/[.145]"
+                className="w-full rounded-lg border border-line bg-transparent px-3 py-2 text-sm text-foreground placeholder:text-zinc-400 outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20 dark:placeholder:text-zinc-500"
               >
                 {PRICE_UNITS.map((u) => (
                   <option key={u.value} value={u.value}>
@@ -262,7 +262,7 @@ export default function ListingForm({
               required
               defaultValue={values.location}
               placeholder="e.g. Etobicoke, ON"
-              className="rounded-lg border border-black/[.08] bg-transparent px-3 py-2 text-sm text-foreground dark:border-white/[.145]"
+              className="w-full rounded-lg border border-line bg-transparent px-3 py-2 text-sm text-foreground placeholder:text-zinc-400 outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20 dark:placeholder:text-zinc-500"
             />
           </div>
 
@@ -273,8 +273,8 @@ export default function ListingForm({
             </p>
 
             <label
-              className={`flex h-24 cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-black/[.15] text-sm text-zinc-500 dark:border-white/[.2] dark:text-zinc-400 ${
-                atCap ? "pointer-events-none opacity-50" : "hover:border-black/[.3] dark:hover:border-white/[.4]"
+              className={`flex h-24 cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-line-strong text-sm text-zinc-500 dark:text-zinc-400 ${
+                atCap ? "pointer-events-none opacity-50" : "hover:border-primary"
               }`}
             >
               {atCap ? "Maximum 6 photos." : "Add photos"}
@@ -290,14 +290,14 @@ export default function ListingForm({
               />
             </label>
 
-            {photoNote && <p className="text-xs text-red-600">{photoNote}</p>}
+            {photoNote && <p className="text-xs text-danger">{photoNote}</p>}
 
             {photos.length > 0 && (
               <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
                 {photos.map((photo) => (
                   <div
                     key={photo.key}
-                    className="relative aspect-square overflow-hidden rounded-lg border border-black/[.08] dark:border-white/[.145]"
+                    className="relative aspect-square overflow-hidden rounded-lg border border-line"
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
@@ -323,12 +323,12 @@ export default function ListingForm({
             )}
           </div>
 
-          {state.status === "error" && <p className="text-sm text-red-600">{state.message}</p>}
+          {state.status === "error" && <p className="text-sm text-danger">{state.message}</p>}
 
           <button
             type="submit"
             disabled={submitting}
-            className="mt-2 flex h-11 w-full items-center justify-center rounded-full bg-foreground px-5 text-sm font-medium text-background transition-colors hover:bg-[#383838] disabled:opacity-50 dark:hover:bg-[#ccc]"
+            className="mt-2 flex h-11 w-full items-center justify-center rounded-full bg-primary px-5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover active:bg-primary-active disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
             {mode === "create"
               ? submitting
@@ -366,16 +366,16 @@ function DeleteListingLink({ listingId }: { listingId: string }) {
   }
 
   return (
-    <div className="mt-6 border-t border-black/[.08] pt-4 dark:border-white/[.145]">
+    <div className="mt-6 border-t border-line pt-4">
       <button
         type="button"
         onClick={handleDelete}
         disabled={deleting}
-        className="text-sm font-medium text-red-600 hover:underline disabled:opacity-50"
+        className="text-sm font-medium text-danger hover:underline disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-sm"
       >
         {deleting ? "Deleting…" : "Delete listing"}
       </button>
-      {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
+      {error && <p className="mt-1 text-sm text-danger">{error}</p>}
     </div>
   );
 }

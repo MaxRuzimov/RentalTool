@@ -6,7 +6,7 @@ import MyListingCard from "@/components/listings/MyListingCard";
 import type { ListingCardData } from "@/components/listings/ListingCard";
 
 const NEW_LISTING_BUTTON =
-  "flex h-10 items-center justify-center rounded-full bg-foreground px-5 text-sm font-medium text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc]";
+  "flex h-10 items-center justify-center rounded-full bg-primary px-5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover active:bg-primary-active focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background";
 
 // Route protection (spec §6): server-side check, same pattern as /profile.
 export default async function MyListingsPage() {
@@ -51,14 +51,14 @@ export default async function MyListingsPage() {
   return (
     <div className="mx-auto w-full max-w-3xl flex-1 px-4 py-12">
       <div className="mb-8 flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-foreground">My listings</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">My listings</h1>
         <Link href="/listings/new" className={NEW_LISTING_BUTTON}>
           + New listing
         </Link>
       </div>
 
       {cards.length === 0 ? (
-        <div className="flex flex-col items-center gap-4 rounded-2xl border border-black/[.08] py-16 text-center dark:border-white/[.145]">
+        <div className="flex flex-col items-center gap-4 rounded-2xl border border-line py-16 text-center">
           <p className="text-foreground">You haven&apos;t listed any tools yet.</p>
           <Link href="/listings/new" className={NEW_LISTING_BUTTON}>
             + New listing

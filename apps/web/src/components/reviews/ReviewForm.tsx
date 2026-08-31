@@ -6,7 +6,7 @@ import StarRating from "./StarRating";
 import { createReview, type ReviewActionState } from "@/app/reviews/actions";
 
 const PRIMARY_BUTTON =
-  "flex h-10 items-center justify-center rounded-full bg-foreground px-4 text-sm font-medium text-background transition-colors hover:bg-[#383838] disabled:opacity-50 dark:hover:bg-[#ccc]";
+  "flex h-10 items-center justify-center rounded-full bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover active:bg-primary-active disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background";
 
 const MAX_COMMENT_LENGTH = 500;
 
@@ -56,7 +56,7 @@ export default function ReviewForm({
   }
 
   return (
-    <div className="mt-2 rounded-2xl border border-black/[.08] bg-white p-4 dark:border-white/[.145] dark:bg-[#0a0a0a]">
+    <div className="mt-2 rounded-2xl border border-line bg-surface p-4">
       <h3 className="text-sm font-semibold text-foreground">Rate this rental</h3>
 
       <div className="mt-2">
@@ -70,14 +70,14 @@ export default function ReviewForm({
           value={comment}
           onChange={(e) => setComment(e.target.value)}
           placeholder="Optional — share how the rental went (max 500 characters)."
-          className="rounded-lg border border-black/[.08] bg-transparent px-3 py-2 text-sm text-foreground dark:border-white/[.145]"
+          className="w-full rounded-lg border border-line bg-transparent px-3 py-2 text-sm text-foreground placeholder:text-zinc-400 outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20 dark:placeholder:text-zinc-500"
         />
         <span className="self-end text-xs text-zinc-500 dark:text-zinc-400">
           {comment.length}/{MAX_COMMENT_LENGTH}
         </span>
       </div>
 
-      {state.status === "error" && <p className="mt-1 text-sm text-red-600">{state.message}</p>}
+      {state.status === "error" && <p className="mt-1 text-sm text-danger">{state.message}</p>}
 
       <div className="mt-2 flex items-center gap-3">
         <button
@@ -92,7 +92,7 @@ export default function ReviewForm({
           type="button"
           onClick={onCancel}
           disabled={submitting}
-          className="text-sm font-medium text-foreground underline disabled:opacity-50"
+          className="text-sm font-medium text-accent underline-offset-2 hover:underline hover:text-accent-hover disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-sm"
         >
           Cancel
         </button>

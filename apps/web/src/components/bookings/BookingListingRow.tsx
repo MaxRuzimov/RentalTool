@@ -40,7 +40,7 @@ export default function BookingListingRow({
   const estimate = estimatePrice(priceAmount, priceUnit, days);
 
   return (
-    <div className="flex flex-col gap-3 rounded-2xl border border-black/[.08] bg-white p-4 dark:border-white/[.145] dark:bg-[#0a0a0a] sm:flex-row sm:items-start sm:gap-4">
+    <div className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-4 sm:flex-row sm:items-start sm:gap-4">
       <div className="flex gap-4 sm:contents">
         <Link href={`/listings/${listingId}`} className="shrink-0">
           {coverUrl ? (

@@ -15,6 +15,7 @@ Status qiymatlari: Not started / In progress / In review / Done
 | M9 | QA — to'liq test va bug-fix bosqichi | Done |
 | M10 | Production deploy — web (Vercel, *.vercel.app) | In progress |
 | M11 | App Store / Play Store submission | Not started (deferred — awaiting Max's go-ahead, no store developer accounts exist yet) |
+| M12 | Web vizual dizayn tizimi — rang, tipografiya, spacing, komponent uslubi | Done |
 | — | ~~Release blocker: "List a tool" appeared to misroute to log-out.~~ **Closed, false alarm** — independently re-confirmed by two separate investigations (backend-engineer and the orchestrating session, on separate fresh production builds). Root cause: the reporting test script used an ambiguous Playwright selector (`button[type="submit"]`) that matched both the header's global "Log out" button and the listing form's own submit button, and silently clicked the wrong one — a test-automation bug, not an app bug. With an unambiguous selector, `createListing`/`updateListing`/`deleteListing` all work correctly (verified: correct Server Action dispatched, listing actually written to the DB, session preserved). No code change was needed; `apps/web/src/app/listings/actions.ts` and `ListingForm.tsx` are unmodified. | Closed (not a bug) |
 
 ## Qoida

@@ -6,7 +6,7 @@ import { createBookingRequest, type BookingActionState } from "@/app/bookings/ac
 import { dayCount, estimatePrice, formatMoney, todayISODate } from "@/lib/bookings/pricing";
 
 const PRIMARY_BUTTON =
-  "flex h-11 w-full items-center justify-center rounded-full bg-foreground px-5 text-sm font-medium text-background transition-colors hover:bg-[#383838] disabled:opacity-50 dark:hover:bg-[#ccc]";
+  "flex h-11 w-full items-center justify-center rounded-full bg-primary px-5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover active:bg-primary-active disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background";
 
 /**
  * The "Request to rent" panel (spec §3.1.A/B, §3.2, §3.3). Renders for both
@@ -80,8 +80,8 @@ export default function RequestToRentForm({
   }
 
   return (
-    <div className="rounded-2xl border border-black/[.08] p-4 dark:border-white/[.145]">
-      <h2 className="text-sm font-semibold text-foreground">Request to rent this tool</h2>
+    <div className="rounded-2xl border border-line p-4">
+      <h2 className="text-lg font-semibold text-foreground">Request to rent this tool</h2>
 
       <form onSubmit={handleSubmit} className="mt-3 flex flex-col gap-3">
         <div className="flex flex-col gap-3 sm:flex-row">
@@ -96,7 +96,7 @@ export default function RequestToRentForm({
               min={today}
               value={startDate}
               onChange={(e) => handleStartDateChange(e.target.value)}
-              className="rounded-lg border border-black/[.08] bg-transparent px-3 py-2 text-sm text-foreground dark:border-white/[.145]"
+              className="w-full rounded-lg border border-line bg-transparent px-3 py-2 text-sm text-foreground placeholder:text-zinc-400 outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20 dark:placeholder:text-zinc-500"
             />
           </div>
           <div className="flex flex-1 flex-col gap-1">
@@ -110,12 +110,12 @@ export default function RequestToRentForm({
               min={startDate || today}
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              className="rounded-lg border border-black/[.08] bg-transparent px-3 py-2 text-sm text-foreground dark:border-white/[.145]"
+              className="w-full rounded-lg border border-line bg-transparent px-3 py-2 text-sm text-foreground placeholder:text-zinc-400 outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20 dark:placeholder:text-zinc-500"
             />
           </div>
         </div>
 
-        {validationMessage && <p className="text-sm text-red-600">{validationMessage}</p>}
+        {validationMessage && <p className="text-sm text-danger">{validationMessage}</p>}
 
         {estimate && (
           <div className="flex flex-col gap-0.5 text-sm text-foreground">
@@ -154,7 +154,7 @@ export default function RequestToRentForm({
           </div>
         )}
 
-        {state.status === "error" && <p className="text-sm text-red-600">{state.message}</p>}
+        {state.status === "error" && <p className="text-sm text-danger">{state.message}</p>}
 
         {loggedIn ? (
           <button type="submit" disabled={submitting || !datesValid} className={`mt-1 ${PRIMARY_BUTTON}`}>

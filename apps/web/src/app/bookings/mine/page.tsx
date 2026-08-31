@@ -9,7 +9,7 @@ import ReviewRowSlot from "@/components/reviews/ReviewRowSlot";
 import { todayISODate } from "@/lib/bookings/pricing";
 
 const BROWSE_BUTTON =
-  "flex h-10 items-center justify-center rounded-full bg-foreground px-5 text-sm font-medium text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc]";
+  "flex h-10 items-center justify-center rounded-full bg-primary px-5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover active:bg-primary-active focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background";
 
 type BookingRow = {
   id: string;
@@ -91,24 +91,27 @@ export default async function MyBookingsPage({
 
   return (
     <div className="mx-auto w-full max-w-3xl flex-1 px-4 py-12">
-      <h1 className="text-2xl font-semibold text-foreground">My bookings</h1>
+      <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">My bookings</h1>
 
       <div className="mt-3 text-sm font-medium">
         <span className="font-bold text-foreground">My requests</span>
         <span className="mx-2 text-zinc-400">·</span>
-        <Link href="/bookings/owner-requests" className="text-foreground underline">
+        <Link
+          href="/bookings/owner-requests"
+          className="text-accent underline-offset-2 hover:underline hover:text-accent-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-sm"
+        >
           Requests to me
         </Link>
       </div>
 
       {requestSent && (
-        <p className="mt-6 rounded-lg bg-green-50 px-4 py-3 text-sm text-green-600 dark:bg-green-900/20">
+        <p className="mt-6 rounded-lg bg-success-bg px-4 py-3 text-sm text-success-foreground">
           Request sent! The owner will respond soon.
         </p>
       )}
 
       {bookings.length === 0 ? (
-        <div className="mt-8 flex flex-col items-center gap-4 rounded-2xl border border-black/[.08] py-16 text-center dark:border-white/[.145]">
+        <div className="mt-8 flex flex-col items-center gap-4 rounded-2xl border border-line py-16 text-center">
           <p className="text-foreground">You haven&apos;t requested to rent anything yet.</p>
           <Link href="/listings" className={BROWSE_BUTTON}>
             Browse listings

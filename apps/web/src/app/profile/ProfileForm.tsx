@@ -15,7 +15,7 @@ function SaveButton() {
     <button
       type="submit"
       disabled={pending}
-      className="mt-2 flex h-11 w-full items-center justify-center rounded-full bg-foreground px-5 text-sm font-medium text-background transition-colors hover:bg-[#383838] disabled:opacity-50 dark:hover:bg-[#ccc]"
+      className="mt-2 flex h-11 w-full items-center justify-center rounded-full bg-primary px-5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover active:bg-primary-active disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
     >
       {pending ? "Saving…" : "Save changes"}
     </button>
@@ -43,9 +43,9 @@ export default function ProfileForm({
   const [avatarBroken, setAvatarBroken] = useState(false);
 
   return (
-    <div className="flex flex-1 items-center justify-center bg-zinc-50 px-4 py-16 dark:bg-black">
-      <div className="w-full max-w-md rounded-2xl border border-black/[.08] bg-white p-8 dark:border-white/[.145] dark:bg-[#0a0a0a]">
-        <h1 className="text-2xl font-semibold text-foreground">Your profile</h1>
+    <div className="flex flex-1 items-center justify-center bg-surface-muted px-4 py-16">
+      <div className="w-full max-w-md rounded-2xl border border-line bg-surface p-8">
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">Your profile</h1>
         <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">Signed in as {email}</p>
 
         <form action={formAction} className="mt-6 flex flex-col gap-4">
@@ -59,7 +59,7 @@ export default function ProfileForm({
               type="text"
               defaultValue={fullName}
               placeholder="Your full name"
-              className="rounded-lg border border-black/[.08] bg-transparent px-3 py-2 text-sm text-foreground dark:border-white/[.145]"
+              className="w-full rounded-lg border border-line bg-transparent px-3 py-2 text-sm text-foreground placeholder:text-zinc-400 outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20 dark:placeholder:text-zinc-500"
             />
           </div>
 
@@ -77,7 +77,7 @@ export default function ProfileForm({
                 setAvatarBroken(false);
               }}
               placeholder="https://…"
-              className="rounded-lg border border-black/[.08] bg-transparent px-3 py-2 text-sm text-foreground dark:border-white/[.145]"
+              className="w-full rounded-lg border border-line bg-transparent px-3 py-2 text-sm text-foreground placeholder:text-zinc-400 outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20 dark:placeholder:text-zinc-500"
             />
             {avatarUrlValue && !avatarBroken && (
               // Arbitrary external URL entered by the user; next/image would
@@ -88,7 +88,7 @@ export default function ProfileForm({
                 src={avatarUrlValue}
                 alt=""
                 onError={() => setAvatarBroken(true)}
-                className="mt-1 h-16 w-16 rounded-full border border-black/[.08] object-cover dark:border-white/[.145]"
+                className="mt-1 h-16 w-16 rounded-full border border-line object-cover"
               />
             )}
           </div>
@@ -103,7 +103,7 @@ export default function ProfileForm({
               type="tel"
               defaultValue={phone}
               placeholder="(647) 555-0100"
-              className="rounded-lg border border-black/[.08] bg-transparent px-3 py-2 text-sm text-foreground dark:border-white/[.145]"
+              className="w-full rounded-lg border border-line bg-transparent px-3 py-2 text-sm text-foreground placeholder:text-zinc-400 outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20 dark:placeholder:text-zinc-500"
             />
             <p className="text-xs text-zinc-500 dark:text-zinc-400">Only visible to you for now.</p>
           </div>
@@ -118,13 +118,13 @@ export default function ProfileForm({
               type="text"
               defaultValue={city}
               placeholder="e.g. Toronto"
-              className="rounded-lg border border-black/[.08] bg-transparent px-3 py-2 text-sm text-foreground dark:border-white/[.145]"
+              className="w-full rounded-lg border border-line bg-transparent px-3 py-2 text-sm text-foreground placeholder:text-zinc-400 outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20 dark:placeholder:text-zinc-500"
             />
           </div>
 
-          {state.status === "error" && <p className="text-sm text-red-600">{state.message}</p>}
+          {state.status === "error" && <p className="text-sm text-danger">{state.message}</p>}
           {state.status === "success" && (
-            <p className="text-sm text-green-600">{state.message}</p>
+            <p className="text-sm text-success">{state.message}</p>
           )}
 
           <SaveButton />
