@@ -39,11 +39,11 @@ export default function CancelBookingButton({ bookingId }: { bookingId: string }
         type="button"
         onClick={handleClick}
         disabled={pending}
-        className="text-sm font-medium text-red-600 hover:underline disabled:opacity-50"
+        className="text-sm font-medium text-danger hover:underline disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-sm"
       >
         {pending ? "Cancelling…" : "Cancel request"}
       </button>
-      {error && <p className="mt-1 max-w-xs text-xs text-red-600">{error}</p>}
+      {error && <p className="mt-1 max-w-xs text-xs text-danger">{error}</p>}
     </div>
   );
 }

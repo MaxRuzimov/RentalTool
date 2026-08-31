@@ -123,10 +123,13 @@ export default async function OwnerRequestsPage() {
 
   return (
     <div className="mx-auto w-full max-w-3xl flex-1 px-4 py-12">
-      <h1 className="text-2xl font-semibold text-foreground">Requests to me</h1>
+      <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">Requests to me</h1>
 
       <div className="mt-3 text-sm font-medium">
-        <Link href="/bookings/mine" className="text-foreground underline">
+        <Link
+          href="/bookings/mine"
+          className="text-accent underline-offset-2 hover:underline hover:text-accent-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-sm"
+        >
           My requests
         </Link>
         <span className="mx-2 text-zinc-400">·</span>
@@ -134,7 +137,7 @@ export default async function OwnerRequestsPage() {
       </div>
 
       {bookings.length === 0 ? (
-        <div className="mt-8 flex flex-col items-center gap-4 rounded-2xl border border-black/[.08] py-16 text-center dark:border-white/[.145]">
+        <div className="mt-8 flex flex-col items-center gap-4 rounded-2xl border border-line py-16 text-center">
           <p className="text-foreground">No booking requests yet.</p>
           <p className="text-sm text-zinc-500 dark:text-zinc-400">
             Requests to rent your listings will show up here.
@@ -143,7 +146,7 @@ export default async function OwnerRequestsPage() {
       ) : (
         <>
           <section className="mt-8">
-            <h2 className="text-sm font-semibold text-foreground">Pending requests</h2>
+            <h2 className="text-lg font-semibold text-foreground">Pending requests</h2>
             {pending.length === 0 ? (
               <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">No pending requests.</p>
             ) : (
@@ -154,7 +157,7 @@ export default async function OwnerRequestsPage() {
           </section>
 
           <section className="mt-10">
-            <h2 className="text-sm font-semibold text-foreground">History</h2>
+            <h2 className="text-lg font-semibold text-foreground">History</h2>
             {history.length === 0 ? (
               <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">No past requests yet.</p>
             ) : (

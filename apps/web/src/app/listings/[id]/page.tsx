@@ -95,7 +95,7 @@ export default async function ListingDetailPage({
   return (
     <div className="mx-auto w-full max-w-3xl flex-1 px-4 py-12">
       {photoError && (
-        <p className="mb-4 text-sm text-red-600">
+        <p className="mb-4 text-sm text-danger">
           Listing saved, but one or more photos failed to upload. You can add photos from the
           edit page.
         </p>
@@ -128,11 +128,11 @@ export default async function ListingDetailPage({
       )}
 
       <div className="mt-6 flex items-start justify-between gap-4">
-        <h1 className="text-2xl font-semibold text-foreground">{listing.title}</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">{listing.title}</h1>
         {isOwner && (
           <Link
             href={`/listings/${listing.id}/edit`}
-            className="shrink-0 text-sm font-medium text-foreground underline"
+            className="shrink-0 text-sm font-medium text-accent underline-offset-2 hover:underline hover:text-accent-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-sm"
           >
             Edit listing
           </Link>
@@ -159,7 +159,7 @@ export default async function ListingDetailPage({
 
       <p className="mt-6 whitespace-pre-line text-sm text-foreground">{listing.description}</p>
 
-      <div className="mt-8 flex items-center gap-3 border-t border-black/[.08] pt-6 dark:border-white/[.145]">
+      <div className="mt-8 flex items-center gap-3 border-t border-line-strong pt-6">
         {owner?.avatar_url ? <OwnerAvatar url={owner.avatar_url} /> : null}
         <div>
           <p className="text-sm font-medium text-foreground">
@@ -179,7 +179,10 @@ export default async function ListingDetailPage({
           // they'd actually manage requests on this listing.
           <p className="text-sm text-zinc-500 dark:text-zinc-400">
             This is your listing.{" "}
-            <Link href="/bookings/owner-requests" className="font-medium text-foreground underline">
+            <Link
+              href="/bookings/owner-requests"
+              className="font-medium text-accent underline-offset-2 hover:underline hover:text-accent-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-sm"
+            >
               View requests
             </Link>
           </p>
@@ -194,7 +197,7 @@ export default async function ListingDetailPage({
         )}
       </div>
 
-      <div className="mt-10 border-t border-black/[.08] pt-6 dark:border-white/[.145]">
+      <div className="mt-10 border-t border-line-strong pt-6">
         <ReviewsList reviews={reviews} />
       </div>
     </div>

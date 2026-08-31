@@ -49,7 +49,7 @@ export default function ApproveDeclineButtons({ bookingId }: { bookingId: string
           type="button"
           onClick={handleApprove}
           disabled={pending !== null}
-          className="flex h-10 items-center justify-center rounded-full bg-foreground px-4 text-sm font-medium text-background transition-colors hover:bg-[#383838] disabled:opacity-50 dark:hover:bg-[#ccc]"
+          className="flex h-10 items-center justify-center rounded-full bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover active:bg-primary-active disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
           {pending === "approve" ? "Approving…" : "Approve"}
         </button>
@@ -57,12 +57,12 @@ export default function ApproveDeclineButtons({ bookingId }: { bookingId: string
           type="button"
           onClick={handleDecline}
           disabled={pending !== null}
-          className="flex h-10 items-center justify-center rounded-full border border-solid border-red-600/30 px-4 text-sm font-medium text-red-600 transition-colors hover:bg-red-600/5 disabled:opacity-50"
+          className="flex h-10 items-center justify-center rounded-full border border-solid border-danger/30 px-4 text-sm font-medium text-danger transition-colors hover:bg-danger-bg disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
           {pending === "decline" ? "Declining…" : "Decline"}
         </button>
       </div>
-      {error && <p className="max-w-xs text-right text-xs text-red-600">{error}</p>}
+      {error && <p className="max-w-xs text-right text-xs text-danger">{error}</p>}
     </div>
   );
 }
