@@ -12,8 +12,8 @@ P2P tool/equipment rental marketplace, launching in the Greater Toronto Area (Ca
 
 ```bash
 npm install
-cp .env.example .env.local   # apps/web reads this — fill in Supabase project values
-npm run dev                  # starts apps/web on http://localhost:3000
+cp .env.example apps/web/.env.local   # fill in Supabase project values (apps/web reads .env.local from its own directory, not the repo root)
+npm run dev                           # starts apps/web on http://localhost:3000
 ```
 
 ### Supabase (local)
