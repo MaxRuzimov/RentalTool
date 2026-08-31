@@ -15,6 +15,7 @@ Status qiymatlari: Not started / In progress / In review / Done
 | M9 | QA — to'liq test va bug-fix bosqichi | Done |
 | M10 | Production deploy — web (Vercel, *.vercel.app) | In progress |
 | M11 | App Store / Play Store submission | Not started (deferred — awaiting Max's go-ahead, no store developer accounts exist yet) |
+| M12 | Web vizual dizayn tizimi — rang, tipografiya, spacing, komponent uslubi | Not started |
 
 ## Qoida
 Har bir milestone tugagach:
