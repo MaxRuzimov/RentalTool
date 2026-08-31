@@ -53,7 +53,7 @@ export default function ReviewRowSlot({
         <button
           type="button"
           onClick={() => setExpanded(true)}
-          className="text-sm font-medium text-foreground underline"
+          className="text-sm font-medium text-accent underline-offset-2 hover:underline hover:text-accent-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-sm"
         >
           Leave a review
         </button>

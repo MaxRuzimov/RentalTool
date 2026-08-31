@@ -51,7 +51,7 @@ export default function ReviewsList({ reviews }: { reviews: ReviewListItem[] }) 
           {reviews.map((review) => (
             <div
               key={review.id}
-              className="rounded-2xl border border-black/[.08] bg-white p-4 dark:border-white/[.145] dark:bg-[#0a0a0a]"
+              className="rounded-2xl border border-line bg-surface p-4"
             >
               <div className="flex items-center gap-2">
                 <StarRating rating={review.rating} size="sm" />

@@ -51,7 +51,7 @@ export default function StarRating({
               type="button"
               onClick={() => onChange?.(n)}
               aria-label={`Rate ${n} star${n === 1 ? "" : "s"}`}
-              className={`${colorClass} cursor-pointer p-1.5 -m-1.5`}
+              className={`${colorClass} cursor-pointer p-1.5 -m-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-full`}
             >
               {glyph}
             </button>
