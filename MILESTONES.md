@@ -13,7 +13,8 @@ Status qiymatlari: Not started / In progress / In review / Done
 | M7 | Web UI polish — responsive dizayn | Done |
 | M8 | Mobil ilova (Expo) — asosiy ekranlar | Done |
 | M9 | QA — to'liq test va bug-fix bosqichi | Done |
-| M10 | Production deploy (web + App Store/Play Store submission) | Not started |
+| M10 | Production deploy — web (Vercel, *.vercel.app) | In progress |
+| M11 | App Store / Play Store submission | Not started (deferred — awaiting Max's go-ahead, no store developer accounts exist yet) |
 
 ## Qoida
 Har bir milestone tugagach:
