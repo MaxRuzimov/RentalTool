@@ -17,7 +17,7 @@ export default function ListingCard({ listing }: { listing: ListingCardData }) {
   return (
     <Link
       href={`/listings/${listing.id}`}
-      className="flex flex-col overflow-hidden rounded-2xl border border-black/[.08] bg-white transition-shadow hover:shadow-md dark:border-white/[.145] dark:bg-[#0a0a0a]"
+      className="flex flex-col overflow-hidden rounded-2xl border border-line bg-surface transition-shadow hover:shadow-md"
     >
       {listing.coverUrl ? (
         // eslint-disable-next-line @next/next/no-img-element

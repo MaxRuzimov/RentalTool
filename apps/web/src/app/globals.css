@@ -2,25 +2,93 @@
 
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #18181b;
+  --surface: #ffffff;
+  --surface-muted: #fafafa;
+  --line: rgb(0 0 0 / 8%);
+  --line-strong: rgb(0 0 0 / 15%);
+
+  --primary: #c2410c;
+  --primary-hover: #9a3412;
+  --primary-active: #7c2d12;
+  --primary-foreground: #ffffff;
+
+  --accent: #1e3a5f;
+  --accent-hover: #16293f;
+  --accent-foreground: #ffffff;
+
+  --success: #16a34a;
+  --success-bg: #dcfce7;
+  --success-foreground: #14532d;
+  --warning: #d97706;
+  --warning-bg: #fef3c7;
+  --warning-foreground: #78350f;
+  --danger: #dc2626;
+  --danger-bg: #fee2e2;
+  --danger-foreground: #7f1d1d;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-active: var(--primary-active);
+  --color-primary-foreground: var(--primary-foreground);
+
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-foreground: var(--accent-foreground);
+
+  --color-success: var(--success);
+  --color-success-bg: var(--success-bg);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-bg: var(--warning-bg);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-danger: var(--danger);
+  --color-danger-bg: var(--danger-bg);
+  --color-danger-foreground: var(--danger-foreground);
+
+  --font-sans: var(--font-inter);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
-    --foreground: #ededed;
+    --foreground: #f4f4f5;
+    --surface: #161616;
+    --surface-muted: #09090b;
+    --line: rgb(255 255 255 / 14.5%);
+    --line-strong: rgb(255 255 255 / 22%);
+
+    --primary: #f97316;
+    --primary-hover: #fb923c;
+    --primary-active: #ea580c;
+    --primary-foreground: #171717;
+
+    --accent: #93b4d6;
+    --accent-hover: #b7cfe6;
+    --accent-foreground: #0a0a0a;
+
+    --success: #4ade80;
+    --success-bg: rgb(22 163 74 / 20%);
+    --success-foreground: #bbf7d0;
+    --warning: #fbbf24;
+    --warning-bg: rgb(217 119 6 / 20%);
+    --warning-foreground: #fde68a;
+    --danger: #f87171;
+    --danger-bg: rgb(220 38 38 / 20%);
+    --danger-foreground: #fecaca;
   }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
 }

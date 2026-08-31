@@ -25,7 +25,7 @@ export default function MyListingCard({ listing }: { listing: ListingCardData })
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-2xl border border-black/[.08] bg-white p-4 dark:border-white/[.145] dark:bg-[#0a0a0a] sm:flex-row sm:items-center sm:gap-4">
+    <div className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-4 sm:flex-row sm:items-center sm:gap-4">
       <div className="flex gap-4 sm:contents">
         <Link href={`/listings/${listing.id}`} className="shrink-0">
           {listing.coverUrl ? (
@@ -49,19 +49,22 @@ export default function MyListingCard({ listing }: { listing: ListingCardData })
             {formatPrice(listing.price_amount, listing.price_unit)}
           </p>
           <p className="text-xs text-zinc-500 dark:text-zinc-400">{listing.location}</p>
-          {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
+          {error && <p className="mt-1 text-xs text-danger">{error}</p>}
         </div>
       </div>
 
       <div className="flex items-center justify-between gap-2 text-sm font-medium sm:shrink-0 sm:flex-col sm:items-end sm:justify-start">
-        <Link href={`/listings/${listing.id}/edit`} className="text-foreground hover:underline">
+        <Link
+          href={`/listings/${listing.id}/edit`}
+          className="text-accent underline-offset-2 hover:underline hover:text-accent-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-sm"
+        >
           Edit
         </Link>
         <button
           type="button"
           onClick={handleDelete}
           disabled={deleting}
-          className="text-red-600 hover:underline disabled:opacity-50"
+          className="text-danger hover:underline disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-sm"
         >
           {deleting ? "Deleting…" : "Delete"}
         </button>

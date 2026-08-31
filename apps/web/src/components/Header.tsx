@@ -24,30 +24,42 @@ export default async function Header() {
   }
 
   return (
-    <header className="flex flex-wrap items-center justify-between gap-y-2 border-b border-black/[.08] px-4 py-4 dark:border-white/[.145] sm:px-6">
-      <Link href="/" className="text-base font-semibold text-foreground">
+    <header className="flex flex-wrap items-center justify-between gap-y-2 border-b border-line px-4 py-4 sm:px-6">
+      <Link href="/" className="text-base font-semibold text-accent">
         RentalTool
       </Link>
 
       <nav className="flex flex-wrap items-center justify-end gap-x-4 gap-y-2 text-sm font-medium">
-        <Link href="/listings" className="text-foreground hover:underline">
+        <Link
+          href="/listings"
+          className="text-zinc-600 hover:text-primary hover:underline underline-offset-2 dark:text-zinc-300"
+        >
           Browse listings
         </Link>
         {user ? (
           <>
-            <Link href="/listings/mine" className="text-foreground hover:underline">
+            <Link
+              href="/listings/mine"
+              className="text-zinc-600 hover:text-primary hover:underline underline-offset-2 dark:text-zinc-300"
+            >
               My listings
             </Link>
-            <Link href="/bookings/mine" className="text-foreground hover:underline">
+            <Link
+              href="/bookings/mine"
+              className="text-zinc-600 hover:text-primary hover:underline underline-offset-2 dark:text-zinc-300"
+            >
               Bookings
             </Link>
-            <Link href="/profile" className="max-w-[10rem] truncate text-foreground hover:underline">
+            <Link
+              href="/profile"
+              className="max-w-[10rem] truncate text-zinc-600 hover:text-primary hover:underline underline-offset-2 dark:text-zinc-300"
+            >
               {fullName || "Account"}
             </Link>
             <form action={logout}>
               <button
                 type="submit"
-                className="flex h-9 items-center justify-center rounded-full border border-solid border-black/[.08] px-4 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a]"
+                className="flex h-9 items-center justify-center rounded-full border border-line px-4 transition-colors hover:border-transparent hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
               >
                 Log out
               </button>
@@ -55,12 +67,15 @@ export default async function Header() {
           </>
         ) : (
           <>
-            <Link href="/login" className="text-foreground hover:underline">
+            <Link
+              href="/login"
+              className="text-zinc-600 hover:text-primary hover:underline underline-offset-2 dark:text-zinc-300"
+            >
               Log in
             </Link>
             <Link
               href="/signup"
-              className="flex h-9 items-center justify-center rounded-full bg-foreground px-4 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc]"
+              className="flex h-9 items-center justify-center rounded-full bg-primary px-4 text-primary-foreground transition-colors hover:bg-primary-hover active:bg-primary-active focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             >
               Sign up
             </Link>
