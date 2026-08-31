@@ -15,6 +15,7 @@ Status qiymatlari: Not started / In progress / In review / Done
 | M9 | QA — to'liq test va bug-fix bosqichi | Done |
 | M10 | Production deploy — web (Vercel, *.vercel.app) | In progress |
 | M11 | App Store / Play Store submission | Not started (deferred — awaiting Max's go-ahead, no store developer accounts exist yet) |
+| — | **Release blocker**: "List a tool" (create/edit/delete listing) silently misroutes to log-out instead of saving — found during M12 testing, confirmed pre-existing on `main`, reproducible in a real production build. Must be fixed before real production traffic hits `/listings/new`. | In progress |
 
 ## Qoida
 Har bir milestone tugagach:
