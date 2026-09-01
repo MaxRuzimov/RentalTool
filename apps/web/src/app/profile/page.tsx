@@ -5,7 +5,12 @@ import ProfileForm from "./ProfileForm";
 // Route protection (spec §5): server-side check, not a client-only
 // useEffect redirect, so a signed-out visitor never sees a flash of
 // protected content.
-export default async function ProfilePage() {
+export default async function ProfilePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ confirmed?: string }>;
+}) {
+  const { confirmed } = await searchParams;
   const supabase = await createClient();
   const {
     data: { user },
@@ -31,6 +36,7 @@ export default async function ProfilePage() {
       avatarUrl={profile?.avatar_url ?? ""}
       phone={profile?.phone ?? ""}
       city={profile?.city ?? ""}
+      justConfirmed={Boolean(confirmed)}
     />
   );
 }

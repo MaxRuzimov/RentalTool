@@ -14,6 +14,7 @@ export default async function Header() {
   } = await supabase.auth.getUser();
 
   let fullName: string | null = null;
+  let pendingRequestCount = 0;
   if (user) {
     const { data: profile } = await supabase
       .from("profiles")
@@ -21,6 +22,17 @@ export default async function Header() {
       .eq("id", user.id)
       .maybeSingle();
     fullName = profile?.full_name ?? null;
+
+    // Count of pending requests on listings this user owns — same
+    // `listings!inner` + `.eq("listings.owner_id", ...)` scoping pattern as
+    // /bookings/owner-requests's own query, `head: true` so only the count
+    // is returned (no row data needed for a badge number).
+    const { count } = await supabase
+      .from("bookings")
+      .select("id, listings!inner(owner_id)", { count: "exact", head: true })
+      .eq("status", "pending")
+      .eq("listings.owner_id", user.id);
+    pendingRequestCount = count ?? 0;
   }
 
   return (
@@ -46,9 +58,17 @@ export default async function Header() {
             </Link>
             <Link
               href="/bookings/mine"
-              className="text-zinc-600 hover:text-primary hover:underline underline-offset-2 dark:text-zinc-300"
+              className="relative text-zinc-600 hover:text-primary hover:underline underline-offset-2 dark:text-zinc-300"
             >
               Bookings
+              {pendingRequestCount > 0 && (
+                <span
+                  className="ml-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-xs font-semibold text-primary-foreground"
+                  aria-label={`${pendingRequestCount} pending booking request${pendingRequestCount === 1 ? "" : "s"}`}
+                >
+                  {pendingRequestCount > 99 ? "99+" : pendingRequestCount}
+                </span>
+              )}
             </Link>
             <Link
               href="/profile"

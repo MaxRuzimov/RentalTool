@@ -22,7 +22,13 @@ function safeRedirectTarget(redirectTo: string | undefined): string {
   return redirectTo;
 }
 
-export default function LoginForm({ redirectTo }: { redirectTo?: string }) {
+export default function LoginForm({
+  redirectTo,
+  confirmError,
+}: {
+  redirectTo?: string;
+  confirmError?: boolean;
+}) {
   const router = useRouter();
 
   const [email, setEmail] = useState("");
@@ -63,6 +69,13 @@ export default function LoginForm({ redirectTo }: { redirectTo?: string }) {
     <div className="flex flex-1 items-center justify-center bg-surface-muted px-4 py-16">
       <div className="w-full max-w-sm rounded-2xl border border-line bg-surface p-8">
         <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">Log in</h1>
+
+        {confirmError && (
+          <p className="mt-6 rounded-lg bg-danger-bg px-4 py-3 text-sm text-danger-foreground">
+            That confirmation link is invalid or has expired. If you already confirmed your
+            account, just log in below — otherwise sign up again to get a new link.
+          </p>
+        )}
 
         <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4">
           <div className="flex flex-col gap-1">
