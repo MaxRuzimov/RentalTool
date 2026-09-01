@@ -77,7 +77,7 @@ transactional email and is not a regression from anything the app itself does.
         <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 24px 0;">
           <tr>
             <td style="border-radius:9999px; background-color:#c2410c;">
-              <a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email&next=/profile?confirmed=1"
+              <a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&amp;type=email&amp;next=/profile?confirmed=1"
                  style="display:inline-block; padding:12px 28px; font-size:14px; font-weight:500; color:#ffffff; text-decoration:none; border-radius:9999px;">
                 Confirm your email
               </a>
@@ -89,7 +89,7 @@ transactional email and is not a regression from anything the app itself does.
           If the button doesn't work, copy and paste this link into your browser:
         </p>
         <p style="margin:0 0 24px 0; font-size:12px; line-height:1.6; word-break:break-all; color:#1e3a5f;">
-          {{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email&next=/profile?confirmed=1
+          {{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&amp;type=email&amp;next=/profile?confirmed=1
         </p>
 
         <p style="margin:0; font-size:12px; line-height:1.6; color:#a1a1aa;">
