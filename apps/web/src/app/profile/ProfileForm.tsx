@@ -28,12 +28,14 @@ export default function ProfileForm({
   avatarUrl,
   phone,
   city,
+  justConfirmed,
 }: {
   email: string;
   fullName: string;
   avatarUrl: string;
   phone: string;
   city: string;
+  justConfirmed?: boolean;
 }) {
   const [state, formAction] = useActionState(updateProfile, initialProfileFormState);
 
@@ -47,6 +49,13 @@ export default function ProfileForm({
       <div className="w-full max-w-md rounded-2xl border border-line bg-surface p-8">
         <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">Your profile</h1>
         <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">Signed in as {email}</p>
+
+        {justConfirmed && (
+          <p className="mt-6 rounded-lg bg-success-bg px-4 py-3 text-sm text-success-foreground">
+            Email confirmed — you&apos;re all set. Feel free to fill in the rest of your profile
+            below.
+          </p>
+        )}
 
         <form action={formAction} className="mt-6 flex flex-col gap-4">
           <div className="flex flex-col gap-1">

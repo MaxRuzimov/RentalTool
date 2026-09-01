@@ -95,7 +95,8 @@ export default function SignupPage() {
 
         {confirmationPending ? (
           <p className="mt-6 text-sm text-success">
-            Account created! Check your email to confirm your account, then log in.
+            Account created! Check your email and click the confirmation link to finish setting
+            up your account.
           </p>
         ) : (
           <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4">
