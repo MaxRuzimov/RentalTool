@@ -125,7 +125,17 @@ export default async function MyBookingsPage({
           {bookings.map((booking) => {
             const listing = booking.listings;
             if (!listing) return null;
-            const canCancel = booking.status === "pending" || booking.status === "approved";
+            // M14 fix: an `approved` booking whose rental period has already
+            // ended shouldn't still offer "Cancel request" — the rental
+            // already happened. `today` (todayISODate(), computed once above
+            // in the fixed America/Toronto zone — never `new Date()`/
+            // `toISOString()`, which is the exact UTC bug M5 fixed) is the
+            // same "today" used for this page's review-eligibility check
+            // just below, so the two never disagree about whether a booking
+            // is still ongoing.
+            const canCancel =
+              booking.status === "pending" ||
+              (booking.status === "approved" && booking.end_date >= today);
             const contact = contactByBookingId.get(booking.id);
 
             // Review slot (spec §7.1) — mutually exclusive with the M5

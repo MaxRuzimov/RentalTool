@@ -9,6 +9,7 @@ import CancelBookingButton from "@/components/bookings/CancelBookingButton";
 import ApproveDeclineButtons from "@/components/bookings/ApproveDeclineButtons";
 import ContactInfo from "@/components/bookings/ContactInfo";
 import EmptyState from "@/components/ui/EmptyState";
+import { todayISODate } from "@/lib/bookings/pricing";
 
 type BookingRow = {
   id: string;
@@ -86,6 +87,7 @@ export default async function OwnerRequestsPage() {
 
   const pending = bookings.filter((b) => b.status === "pending");
   const history = bookings.filter((b) => b.status !== "pending");
+  const today = todayISODate();
 
   function renderRow(booking: BookingRow, section: "pending" | "history") {
     const listing = booking.listings;
@@ -97,7 +99,11 @@ export default async function OwnerRequestsPage() {
     let actions: ReactNode;
     if (section === "pending") {
       actions = <ApproveDeclineButtons bookingId={booking.id} />;
-    } else if (booking.status === "approved") {
+    } else if (booking.status === "approved" && booking.end_date >= today) {
+      // M14 fix: same "already-ended rentals can't be cancelled" rule as
+      // /bookings/mine — see the comment there. Owners hit the exact same
+      // stale-button bug on their own "Cancel" action for a completed
+      // rental, so this needs the identical fix, not just the renter side.
       actions = <CancelBookingButton bookingId={booking.id} />;
     }
 

@@ -40,53 +40,65 @@ export default function SignupPage() {
     }
 
     setSubmitting(true);
-    const supabase = createClient();
-    const { data, error: signUpError } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { data: { full_name: trimmedFullName } },
-    });
-    setSubmitting(false);
 
-    if (signUpError) {
-      console.error(signUpError);
-      const message = signUpError.message.toLowerCase();
-      if (message.includes("already registered") || message.includes("already exists")) {
-        setError(
-          <>
-            An account with this email already exists.{" "}
-            <Link
-              href="/login"
-              className="font-medium text-accent underline-offset-2 hover:underline hover:text-accent-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-sm"
-            >
-              Try logging in instead.
-            </Link>
-          </>,
-        );
-      } else if (message.includes("password")) {
-        setError("Password must be at least 6 characters.");
-      } else {
-        setError("Something went wrong. Please try again.");
+    // M14 fix: `signUp` reaches Supabase directly over the network from the
+    // browser — a DNS failure/offline connection can throw rather than
+    // resolve with `{ error }`. Without this try/catch that was an
+    // unhandled promise rejection: `submitting` never got reset, so the
+    // button stayed stuck "Signing up…" forever with no feedback.
+    try {
+      const supabase = createClient();
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { data: { full_name: trimmedFullName } },
+      });
+
+      if (signUpError) {
+        console.error(signUpError);
+        const message = signUpError.message.toLowerCase();
+        if (message.includes("already registered") || message.includes("already exists")) {
+          setError(
+            <>
+              An account with this email already exists.{" "}
+              <Link
+                href="/login"
+                className="font-medium text-accent underline-offset-2 hover:underline hover:text-accent-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-sm"
+              >
+                Try logging in instead.
+              </Link>
+            </>,
+          );
+        } else if (message.includes("password")) {
+          setError("Password must be at least 6 characters.");
+        } else {
+          setError("Something went wrong. Please try again.");
+        }
+        return;
       }
-      return;
-    }
 
-    // Whether signUp() returns an active session depends on the project's
-    // email-confirmation setting: locally (auth.email.enable_confirmations
-    // = false in supabase/config.toml, see spec §0) it's returned
-    // immediately and we can go straight to the profile page. On a hosted
-    // project with confirmations enabled (the default there), signUp()
-    // succeeds with no error but `data.session` is null until the user
-    // clicks the confirmation link — redirecting to /profile in that case
-    // would just bounce them to /login with no explanation, so show a
-    // "check your email" message instead.
-    if (data.session) {
-      router.push("/profile");
-      router.refresh();
-      return;
-    }
+      // Whether signUp() returns an active session depends on the project's
+      // email-confirmation setting: locally (auth.email.enable_confirmations
+      // = false in supabase/config.toml, see spec §0) it's returned
+      // immediately and we can go straight to the profile page. On a hosted
+      // project with confirmations enabled (the default there), signUp()
+      // succeeds with no error but `data.session` is null until the user
+      // clicks the confirmation link — redirecting to /profile in that case
+      // would just bounce them to /login with no explanation, so show a
+      // "check your email" message instead.
+      if (data.session) {
+        router.push("/profile");
+        router.refresh();
+        return;
+      }
 
-    setConfirmationPending(true);
+      setConfirmationPending(true);
+    } catch (err) {
+      console.error("SignupPage submit failed", err);
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (

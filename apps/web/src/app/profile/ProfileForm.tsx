@@ -68,6 +68,7 @@ export default function ProfileForm({
               id="full_name"
               name="full_name"
               type="text"
+              maxLength={100}
               defaultValue={fullName}
               placeholder="Your full name"
               className="w-full rounded-lg border border-line bg-transparent px-3 py-2 text-sm text-foreground placeholder:text-zinc-400 outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20 dark:placeholder:text-zinc-500"
@@ -82,6 +83,7 @@ export default function ProfileForm({
               id="avatar_url"
               name="avatar_url"
               type="url"
+              maxLength={2000}
               value={avatarUrlValue}
               onChange={(e) => {
                 setAvatarUrlValue(e.target.value);
@@ -112,6 +114,7 @@ export default function ProfileForm({
               id="phone"
               name="phone"
               type="tel"
+              maxLength={30}
               defaultValue={phone}
               placeholder="(647) 555-0100"
               className="w-full rounded-lg border border-line bg-transparent px-3 py-2 text-sm text-foreground placeholder:text-zinc-400 outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20 dark:placeholder:text-zinc-500"
@@ -127,6 +130,7 @@ export default function ProfileForm({
               id="city"
               name="city"
               type="text"
+              maxLength={100}
               defaultValue={city}
               placeholder="e.g. Toronto"
               className="w-full rounded-lg border border-line bg-transparent px-3 py-2 text-sm text-foreground placeholder:text-zinc-400 outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20 dark:placeholder:text-zinc-500"

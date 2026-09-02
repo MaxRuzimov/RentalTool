@@ -42,28 +42,39 @@ export default function LoginForm({
     setError(null);
     setSubmitting(true);
 
-    const supabase = createClient();
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    setSubmitting(false);
+    // M14 fix: `signInWithPassword` reaches Supabase directly over the
+    // network from the browser — a DNS failure/offline connection can throw
+    // rather than resolve with `{ error }`. Without this try/catch that was
+    // an unhandled promise rejection: `submitting` never got reset, so the
+    // button stayed stuck "Logging in…" forever with no feedback.
+    try {
+      const supabase = createClient();
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-    if (signInError) {
-      console.error(signInError);
-      // Supabase intentionally returns the same "Invalid login credentials"
-      // error for both a wrong password and an unknown email, so this does
-      // not (and should not) try to distinguish the two cases (spec §3).
-      if (signInError.message.toLowerCase().includes("invalid login credentials")) {
-        setError("Invalid email or password.");
-      } else {
-        setError("Something went wrong. Please try again.");
+      if (signInError) {
+        console.error(signInError);
+        // Supabase intentionally returns the same "Invalid login credentials"
+        // error for both a wrong password and an unknown email, so this does
+        // not (and should not) try to distinguish the two cases (spec §3).
+        if (signInError.message.toLowerCase().includes("invalid login credentials")) {
+          setError("Invalid email or password.");
+        } else {
+          setError("Something went wrong. Please try again.");
+        }
+        return;
       }
-      return;
-    }
 
-    router.push(safeRedirectTarget(redirectTo));
-    router.refresh();
+      router.push(safeRedirectTarget(redirectTo));
+      router.refresh();
+    } catch (err) {
+      console.error("LoginForm submit failed", err);
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (

@@ -5,6 +5,7 @@ import { useMemo, useState, type FormEvent } from "react";
 import Spinner from "@/components/ui/Spinner";
 import { createBookingRequest, type BookingActionState } from "@/app/bookings/actions";
 import { dayCount, estimatePrice, formatMoney, todayISODate } from "@/lib/bookings/pricing";
+import { isRedirectError } from "@/lib/forms/isRedirectError";
 
 const PRIMARY_BUTTON =
   "flex h-11 w-full items-center justify-center rounded-full bg-primary px-5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover active:bg-primary-active disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background";
@@ -73,11 +74,25 @@ export default function RequestToRentForm({
     formData.set("start_date", startDate);
     formData.set("end_date", endDate);
 
-    const result = await createBookingRequest(listingId, formData);
-    // A successful request redirects server-side (throws internally) and
-    // never returns a value here — only error states reach this line.
-    setSubmitting(false);
-    setState(result);
+    // M14 fix: the action call itself can throw (e.g. a network failure
+    // reaching the Next.js server at all, not just a Supabase-level error)
+    // — without this try/catch that left the button stuck "Sending
+    // request…" forever with no feedback.
+    try {
+      const result = await createBookingRequest(listingId, formData);
+      // A successful request redirects server-side (throws internally, and
+      // is deliberately NOT caught below) and never returns a value here —
+      // only error states reach this line.
+      setState(result);
+    } catch (err) {
+      if (isRedirectError(err)) {
+        throw err;
+      }
+      console.error("RequestToRentForm submit failed", err);
+      setState({ status: "error", message: "Could not send your request. Please try again." });
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (

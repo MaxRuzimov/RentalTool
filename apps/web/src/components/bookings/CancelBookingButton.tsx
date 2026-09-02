@@ -22,15 +22,23 @@ export default function CancelBookingButton({ bookingId }: { bookingId: string }
 
     setPending(true);
     setError(null);
-    const result = await cancelBooking(bookingId);
-    setPending(false);
 
-    if (result.status === "error") {
-      setError(result.message ?? "Could not cancel this booking. Please try again.");
-      return;
+    // M14 fix: the action call itself can throw (e.g. a network failure
+    // reaching the Next.js server) — without this try/catch that left the
+    // button stuck "Cancelling…" forever with no feedback.
+    try {
+      const result = await cancelBooking(bookingId);
+      if (result.status === "error") {
+        setError(result.message ?? "Could not cancel this booking. Please try again.");
+        return;
+      }
+      router.refresh();
+    } catch (err) {
+      console.error("CancelBookingButton cancel failed", err);
+      setError("Could not cancel this booking. Please try again.");
+    } finally {
+      setPending(false);
     }
-
-    router.refresh();
   }
 
   return (
