@@ -1,9 +1,11 @@
 import Link from "next/link";
+import { Wrench } from "lucide-react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { signImageUrls } from "@/lib/listings/storage";
 import MyListingCard from "@/components/listings/MyListingCard";
 import type { ListingCardData } from "@/components/listings/ListingCard";
+import EmptyState from "@/components/ui/EmptyState";
 
 const NEW_LISTING_BUTTON =
   "flex h-10 items-center justify-center rounded-full bg-primary px-5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover active:bg-primary-active focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background";
@@ -58,12 +60,11 @@ export default async function MyListingsPage() {
       </div>
 
       {cards.length === 0 ? (
-        <div className="flex flex-col items-center gap-4 rounded-2xl border border-line py-16 text-center">
-          <p className="text-foreground">You haven&apos;t listed any tools yet.</p>
+        <EmptyState icon={Wrench} title="You haven't listed any tools yet.">
           <Link href="/listings/new" className={NEW_LISTING_BUTTON}>
             + New listing
           </Link>
-        </div>
+        </EmptyState>
       ) : (
         <div className="flex flex-col gap-3">
           {cards.map((listing) => (

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Inbox } from "lucide-react";
 import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
@@ -7,6 +8,7 @@ import BookingListingRow from "@/components/bookings/BookingListingRow";
 import CancelBookingButton from "@/components/bookings/CancelBookingButton";
 import ApproveDeclineButtons from "@/components/bookings/ApproveDeclineButtons";
 import ContactInfo from "@/components/bookings/ContactInfo";
+import EmptyState from "@/components/ui/EmptyState";
 
 type BookingRow = {
   id: string;
@@ -137,11 +139,12 @@ export default async function OwnerRequestsPage() {
       </div>
 
       {bookings.length === 0 ? (
-        <div className="mt-8 flex flex-col items-center gap-4 rounded-2xl border border-line py-16 text-center">
-          <p className="text-foreground">No booking requests yet.</p>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">
-            Requests to rent your listings will show up here.
-          </p>
+        <div className="mt-8">
+          <EmptyState
+            icon={Inbox}
+            title="No booking requests yet."
+            description="Requests to rent your listings will show up here."
+          />
         </div>
       ) : (
         <>
