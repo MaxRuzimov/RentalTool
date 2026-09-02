@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { createClient } from "@/lib/supabase/client";
+import Spinner from "@/components/ui/Spinner";
 
 /**
  * Only redirect to a same-origin relative path. `redirectTo` comes from a
@@ -126,6 +127,7 @@ export default function LoginForm({
             disabled={submitting}
             className="mt-2 flex h-11 w-full items-center justify-center rounded-full bg-primary px-5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover active:bg-primary-active disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
+            {submitting && <Spinner className="mr-2 h-4 w-4" />}
             {submitting ? "Logging in…" : "Log in"}
           </button>
         </form>

@@ -2,6 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
+import Spinner from "@/components/ui/Spinner";
 import { updateProfile, type ProfileFormState } from "./actions";
 
 // Defined here (not exported from actions.ts) because a "use server" module
@@ -17,6 +18,7 @@ function SaveButton() {
       disabled={pending}
       className="mt-2 flex h-11 w-full items-center justify-center rounded-full bg-primary px-5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover active:bg-primary-active disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
     >
+      {pending && <Spinner className="mr-2 h-4 w-4" />}
       {pending ? "Saving…" : "Save changes"}
     </button>
   );
@@ -131,9 +133,11 @@ export default function ProfileForm({
             />
           </div>
 
-          {state.status === "error" && <p className="text-sm text-danger">{state.message}</p>}
+          {state.status === "error" && (
+            <p className="rounded-lg bg-danger-bg px-4 py-3 text-sm text-danger-foreground">{state.message}</p>
+          )}
           {state.status === "success" && (
-            <p className="text-sm text-success">{state.message}</p>
+            <p className="rounded-lg bg-success-bg px-4 py-3 text-sm text-success-foreground">{state.message}</p>
           )}
 
           <SaveButton />

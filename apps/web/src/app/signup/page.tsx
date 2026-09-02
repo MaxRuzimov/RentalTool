@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent, type ReactNode } from "react";
 import { createClient } from "@/lib/supabase/client";
+import Spinner from "@/components/ui/Spinner";
 
 // No `searchParams` needed here, so this page is a Client Component
 // directly (unlike /login, which needs the server-provided `redirectTo`
@@ -94,7 +95,7 @@ export default function SignupPage() {
         <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">Sign up</h1>
 
         {confirmationPending ? (
-          <p className="mt-6 text-sm text-success">
+          <p className="mt-6 rounded-lg bg-success-bg px-4 py-3 text-sm text-success-foreground">
             Account created! Check your email and click the confirmation link to finish setting
             up your account.
           </p>
@@ -175,6 +176,7 @@ export default function SignupPage() {
               disabled={submitting}
               className="mt-2 flex h-11 w-full items-center justify-center rounded-full bg-primary px-5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover active:bg-primary-active disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             >
+              {submitting && <Spinner className="mr-2 h-4 w-4" />}
               {submitting ? "Signing up…" : "Sign up"}
             </button>
           </form>

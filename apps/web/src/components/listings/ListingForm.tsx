@@ -1,6 +1,8 @@
 "use client";
 
 import { useRef, useState, type FormEvent } from "react";
+import { X } from "lucide-react";
+import Spinner from "@/components/ui/Spinner";
 import { LISTING_CATEGORIES, PRICE_UNITS } from "@/lib/listings/categories";
 import {
   ACCEPT_ATTR,
@@ -311,7 +313,7 @@ export default function ListingForm({
                       aria-label="Remove photo"
                       className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/60 text-xs leading-none text-white hover:bg-black/80"
                     >
-                      ×
+                      <X className="h-3.5 w-3.5" aria-hidden="true" />
                     </button>
                   </div>
                 ))}
@@ -330,6 +332,7 @@ export default function ListingForm({
             disabled={submitting}
             className="mt-2 flex h-11 w-full items-center justify-center rounded-full bg-primary px-5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover active:bg-primary-active disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
+            {submitting && <Spinner className="mr-2 h-4 w-4" />}
             {mode === "create"
               ? submitting
                 ? "Publishing…"
