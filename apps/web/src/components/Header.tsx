@@ -37,14 +37,17 @@ export default async function Header() {
 
   return (
     <header className="flex flex-wrap items-center justify-between gap-y-2 border-b border-line px-4 py-4 sm:px-6">
-      <Link href="/" className="text-base font-semibold text-accent">
+      <Link
+        href="/"
+        className="rounded-sm text-base font-semibold text-accent transition-colors hover:text-accent-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+      >
         RentalTool
       </Link>
 
       <nav className="flex flex-wrap items-center justify-end gap-x-4 gap-y-2 text-sm font-medium">
         <Link
           href="/listings"
-          className="text-zinc-600 hover:text-primary hover:underline underline-offset-2 dark:text-zinc-300"
+          className="rounded-sm text-zinc-600 hover:text-primary hover:underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background dark:text-zinc-300"
         >
           Browse listings
         </Link>
@@ -52,13 +55,13 @@ export default async function Header() {
           <>
             <Link
               href="/listings/mine"
-              className="text-zinc-600 hover:text-primary hover:underline underline-offset-2 dark:text-zinc-300"
+              className="rounded-sm text-zinc-600 hover:text-primary hover:underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background dark:text-zinc-300"
             >
               My listings
             </Link>
             <Link
               href="/bookings/mine"
-              className="relative text-zinc-600 hover:text-primary hover:underline underline-offset-2 dark:text-zinc-300"
+              className="relative rounded-sm text-zinc-600 hover:text-primary hover:underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background dark:text-zinc-300"
             >
               Bookings
               {pendingRequestCount > 0 && (
@@ -72,7 +75,7 @@ export default async function Header() {
             </Link>
             <Link
               href="/profile"
-              className="max-w-[10rem] truncate text-zinc-600 hover:text-primary hover:underline underline-offset-2 dark:text-zinc-300"
+              className="max-w-[10rem] truncate rounded-sm text-zinc-600 hover:text-primary hover:underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background dark:text-zinc-300"
             >
               {fullName || "Account"}
             </Link>
@@ -89,7 +92,7 @@ export default async function Header() {
           <>
             <Link
               href="/login"
-              className="text-zinc-600 hover:text-primary hover:underline underline-offset-2 dark:text-zinc-300"
+              className="rounded-sm text-zinc-600 hover:text-primary hover:underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background dark:text-zinc-300"
             >
               Log in
             </Link>

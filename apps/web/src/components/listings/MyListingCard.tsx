@@ -36,12 +36,15 @@ export default function MyListingCard({ listing }: { listing: ListingCardData })
               className="h-20 w-20 rounded-lg object-cover"
             />
           ) : (
-            <ImagePlaceholder label={listing.title} className="h-20 w-20 rounded-lg" />
+            <ImagePlaceholder className="h-20 w-20 rounded-lg" />
           )}
         </Link>
 
         <div className="min-w-0 flex-1">
-          <Link href={`/listings/${listing.id}`} className="block truncate text-sm font-semibold text-foreground hover:underline">
+          <Link
+            href={`/listings/${listing.id}`}
+            className="block truncate rounded-sm text-sm font-semibold text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          >
             {listing.title}
           </Link>
           <p className="text-xs text-zinc-400 dark:text-zinc-500">{categoryLabel(listing.category)}</p>

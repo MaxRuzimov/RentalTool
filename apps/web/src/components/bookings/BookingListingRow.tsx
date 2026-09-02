@@ -47,7 +47,7 @@ export default function BookingListingRow({
             // eslint-disable-next-line @next/next/no-img-element
             <img src={coverUrl} alt="" className="h-20 w-20 rounded-lg object-cover" />
           ) : (
-            <ImagePlaceholder label={listingTitle} className="h-20 w-20 rounded-lg" />
+            <ImagePlaceholder className="h-20 w-20 rounded-lg" />
           )}
         </Link>
 
@@ -55,7 +55,7 @@ export default function BookingListingRow({
           {topLabel && <p className="text-xs text-zinc-500 dark:text-zinc-400">{topLabel}</p>}
           <Link
             href={`/listings/${listingId}`}
-            className="block truncate text-sm font-semibold text-foreground hover:underline"
+            className="block truncate rounded-sm text-sm font-semibold text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
             {listingTitle}
           </Link>

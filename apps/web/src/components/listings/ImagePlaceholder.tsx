@@ -1,20 +1,16 @@
+import { Wrench } from "lucide-react";
+
 /**
- * No-photo placeholder (spec §9): a plain light-gray box with the listing's
- * first letter — no stock photo, no external placeholder-image service.
+ * No-photo placeholder (spec §5): a centered generic wrench icon on the
+ * app's recessed-surface tokens — no stock photo, no external
+ * placeholder-image service, consistent with M3's original constraint.
  */
-export default function ImagePlaceholder({
-  label,
-  className = "",
-}: {
-  label: string;
-  className?: string;
-}) {
-  const initial = label.trim().charAt(0).toUpperCase() || "?";
+export default function ImagePlaceholder({ className = "" }: { className?: string }) {
   return (
     <div
-      className={`flex items-center justify-center bg-zinc-100 text-2xl font-semibold text-zinc-400 dark:bg-zinc-900 dark:text-zinc-600 ${className}`}
+      className={`flex items-center justify-center border border-line bg-surface-muted ${className}`}
     >
-      {initial}
+      <Wrench className="h-8 w-8 text-zinc-400 dark:text-zinc-500" strokeWidth={1.5} aria-hidden="true" />
     </div>
   );
 }
