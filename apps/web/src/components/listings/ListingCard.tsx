@@ -17,17 +17,17 @@ export default function ListingCard({ listing }: { listing: ListingCardData }) {
   return (
     <Link
       href={`/listings/${listing.id}`}
-      className="flex flex-col overflow-hidden rounded-2xl border border-line bg-surface transition-shadow hover:shadow-md"
+      className="flex flex-col overflow-hidden rounded-2xl border border-line bg-surface shadow-sm transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
     >
       {listing.coverUrl ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={listing.coverUrl} alt="" className="aspect-square w-full object-cover" />
       ) : (
-        <ImagePlaceholder label={listing.title} className="aspect-square w-full" />
+        <ImagePlaceholder className="aspect-square w-full" />
       )}
       <div className="flex flex-col gap-1 p-4">
         <h3 className="truncate text-sm font-semibold text-foreground">{listing.title}</h3>
-        <p className="text-sm text-foreground">
+        <p className="text-sm font-semibold text-foreground">
           {formatPrice(listing.price_amount, listing.price_unit)}
         </p>
         <p className="text-xs text-zinc-500 dark:text-zinc-400">{listing.location}</p>

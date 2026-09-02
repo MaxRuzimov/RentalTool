@@ -1,8 +1,10 @@
 import Link from "next/link";
+import { PackageSearch, SearchX } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { signImageUrls } from "@/lib/listings/storage";
 import ListingCard from "@/components/listings/ListingCard";
 import type { ListingCardData } from "@/components/listings/ListingCard";
+import EmptyState from "@/components/ui/EmptyState";
 import {
   LISTING_CATEGORIES,
   PRICE_UNITS,
@@ -128,7 +130,7 @@ export default async function ListingsIndexPage({
       <form
         method="GET"
         action="/listings"
-        className="mb-6 flex flex-col gap-3 rounded-2xl border border-line p-4 sm:flex-row sm:flex-wrap sm:items-end sm:gap-3"
+        className="mb-6 flex flex-col gap-3 rounded-2xl border border-line bg-surface-muted p-4 sm:flex-row sm:flex-wrap sm:items-end sm:gap-3"
       >
         <label className="flex w-full flex-col gap-1 text-sm sm:w-40">
           <span className="font-medium text-foreground">Category</span>
@@ -219,26 +221,23 @@ export default async function ListingsIndexPage({
 
       {cards.length === 0 ? (
         hasActiveFilter ? (
-          <div className="flex flex-col items-center gap-4 rounded-2xl border border-line py-16 text-center">
-            <p className="text-foreground">No tools match your filters.</p>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">Try adjusting your search.</p>
+          <EmptyState icon={SearchX} title="No tools match your filters." description="Try adjusting your search.">
             <Link
               href="/listings"
               className="text-sm font-medium text-accent underline-offset-2 hover:underline hover:text-accent-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-sm"
             >
               Clear filters
             </Link>
-          </div>
+          </EmptyState>
         ) : (
-          <div className="flex flex-col items-center gap-4 rounded-2xl border border-line py-16 text-center">
-            <p className="text-foreground">No listings yet.</p>
+          <EmptyState icon={PackageSearch} title="No listings yet.">
             <Link
               href={user ? "/listings/new" : "/signup"}
               className="text-sm font-medium text-accent underline-offset-2 hover:underline hover:text-accent-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-sm"
             >
               Be the first to list a tool!
             </Link>
-          </div>
+          </EmptyState>
         )
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">

@@ -124,7 +124,7 @@ export default async function ListingDetailPage({
           )}
         </div>
       ) : (
-        <ImagePlaceholder label={listing.title} className="aspect-video w-full rounded-2xl" />
+        <ImagePlaceholder className="aspect-video w-full rounded-2xl" />
       )}
 
       <div className="mt-6 flex items-start justify-between gap-4">
@@ -157,17 +157,21 @@ export default async function ListingDetailPage({
         <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">No reviews yet</p>
       )}
 
-      <p className="mt-6 whitespace-pre-line text-sm text-foreground">{listing.description}</p>
+      <h2 className="mt-6 text-lg font-semibold text-foreground">Description</h2>
+      <p className="mt-2 whitespace-pre-line text-sm text-foreground">{listing.description}</p>
 
-      <div className="mt-8 flex items-center gap-3 border-t border-line-strong pt-6">
-        {owner?.avatar_url ? <OwnerAvatar url={owner.avatar_url} /> : null}
-        <div>
-          <p className="text-sm font-medium text-foreground">
-            {owner?.full_name || "A tool owner on RentalTool"}
-          </p>
-          {owner?.city && (
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">{owner.city}</p>
-          )}
+      <div className="mt-8 border-t border-line-strong pt-6">
+        <h2 className="text-lg font-semibold text-foreground">Owner</h2>
+        <div className="mt-3 flex items-center gap-3">
+          {owner?.avatar_url ? <OwnerAvatar url={owner.avatar_url} /> : null}
+          <div>
+            <p className="text-sm font-medium text-foreground">
+              {owner?.full_name || "A tool owner on RentalTool"}
+            </p>
+            {owner?.city && (
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">{owner.city}</p>
+            )}
+          </div>
         </div>
       </div>
 

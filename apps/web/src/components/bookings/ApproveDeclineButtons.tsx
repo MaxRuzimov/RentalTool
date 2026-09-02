@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Spinner from "@/components/ui/Spinner";
 import { approveBooking, declineBooking } from "@/app/bookings/actions";
 
 /**
@@ -51,6 +52,7 @@ export default function ApproveDeclineButtons({ bookingId }: { bookingId: string
           disabled={pending !== null}
           className="flex h-10 items-center justify-center rounded-full bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover active:bg-primary-active disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
+          {pending === "approve" && <Spinner className="mr-2 h-4 w-4" />}
           {pending === "approve" ? "Approving…" : "Approve"}
         </button>
         <button
@@ -59,6 +61,7 @@ export default function ApproveDeclineButtons({ bookingId }: { bookingId: string
           disabled={pending !== null}
           className="flex h-10 items-center justify-center rounded-full border border-solid border-danger/30 px-4 text-sm font-medium text-danger transition-colors hover:bg-danger-bg disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
+          {pending === "decline" && <Spinner className="mr-2 h-4 w-4" />}
           {pending === "decline" ? "Declining…" : "Decline"}
         </button>
       </div>

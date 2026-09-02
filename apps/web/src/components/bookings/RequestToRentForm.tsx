@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState, type FormEvent } from "react";
+import Spinner from "@/components/ui/Spinner";
 import { createBookingRequest, type BookingActionState } from "@/app/bookings/actions";
 import { dayCount, estimatePrice, formatMoney, todayISODate } from "@/lib/bookings/pricing";
 
@@ -158,6 +159,7 @@ export default function RequestToRentForm({
 
         {loggedIn ? (
           <button type="submit" disabled={submitting || !datesValid} className={`mt-1 ${PRIMARY_BUTTON}`}>
+            {submitting && <Spinner className="mr-2 h-4 w-4" />}
             {submitting ? "Sending request…" : "Request to rent"}
           </button>
         ) : null}

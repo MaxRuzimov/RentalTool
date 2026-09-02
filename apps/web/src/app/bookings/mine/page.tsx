@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CalendarClock } from "lucide-react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { signImageUrls } from "@/lib/listings/storage";
@@ -6,6 +7,7 @@ import BookingListingRow from "@/components/bookings/BookingListingRow";
 import CancelBookingButton from "@/components/bookings/CancelBookingButton";
 import ContactInfo from "@/components/bookings/ContactInfo";
 import ReviewRowSlot from "@/components/reviews/ReviewRowSlot";
+import EmptyState from "@/components/ui/EmptyState";
 import { todayISODate } from "@/lib/bookings/pricing";
 
 const BROWSE_BUTTON =
@@ -111,11 +113,12 @@ export default async function MyBookingsPage({
       )}
 
       {bookings.length === 0 ? (
-        <div className="mt-8 flex flex-col items-center gap-4 rounded-2xl border border-line py-16 text-center">
-          <p className="text-foreground">You haven&apos;t requested to rent anything yet.</p>
-          <Link href="/listings" className={BROWSE_BUTTON}>
-            Browse listings
-          </Link>
+        <div className="mt-8">
+          <EmptyState icon={CalendarClock} title="You haven't requested to rent anything yet.">
+            <Link href="/listings" className={BROWSE_BUTTON}>
+              Browse listings
+            </Link>
+          </EmptyState>
         </div>
       ) : (
         <div className="mt-8 flex flex-col gap-3">

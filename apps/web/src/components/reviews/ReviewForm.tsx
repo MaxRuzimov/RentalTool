@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import StarRating from "./StarRating";
+import Spinner from "@/components/ui/Spinner";
 import { createReview, type ReviewActionState } from "@/app/reviews/actions";
 
 const PRIMARY_BUTTON =
@@ -86,6 +87,7 @@ export default function ReviewForm({
           disabled={submitting || rating < 1}
           className={PRIMARY_BUTTON}
         >
+          {submitting && <Spinner className="mr-2 h-4 w-4" />}
           {submitting ? "Submitting…" : "Submit review"}
         </button>
         <button
