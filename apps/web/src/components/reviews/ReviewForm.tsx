@@ -44,15 +44,22 @@ export default function ReviewForm({
     formData.set("rating", String(rating));
     formData.set("comment", comment);
 
-    const result = await createReview(bookingId, formData);
-    setSubmitting(false);
-
-    if (result.status === "error") {
-      setState(result);
-      return;
+    // M14 fix: the action call itself can throw (e.g. a network failure
+    // reaching the Next.js server) — without this try/catch that left the
+    // button stuck "Submitting…" forever with no feedback.
+    try {
+      const result = await createReview(bookingId, formData);
+      if (result.status === "error") {
+        setState(result);
+        return;
+      }
+      router.refresh();
+    } catch (err) {
+      console.error("ReviewForm submit failed", err);
+      setState({ status: "error", message: "Could not submit your review. Please try again." });
+    } finally {
+      setSubmitting(false);
     }
-
-    router.refresh();
   }
 
   return (

@@ -14,6 +14,7 @@ import {
   deleteListing,
   type ListingActionState,
 } from "@/app/listings/actions";
+import { isRedirectError } from "@/lib/forms/isRedirectError";
 
 export type ListingFormInitialValues = {
   title: string;
@@ -136,17 +137,45 @@ export default function ListingForm({
       }
     }
 
-    const result =
-      mode === "create"
-        ? await createListing(formData)
-        : await updateListing(listingId as string, formData);
+    // M14 fix: the action call itself can throw — not just resolve with an
+    // `{ status: "error" }` object — if the request never reaches the Next.js
+    // server at all (e.g. the network drops mid-submit). Without this
+    // try/catch that throw was an unhandled promise rejection: `submitting`
+    // never got reset, so the button stayed stuck "Publishing…"/"Saving…"
+    // forever with no feedback (a real, distinct failure mode from a
+    // Supabase-level error — see the M14 task's explicit note on this).
+    try {
+      const result =
+        mode === "create"
+          ? await createListing(formData)
+          : await updateListing(listingId as string, formData);
 
-    // A successful create/update redirects server-side and never returns a
-    // value here (redirect() throws internally) — only error states reach
-    // this line.
-    setSubmitting(false);
-    setUploading(false);
-    setState(result);
+      // A successful create/update redirects server-side and never returns
+      // a value here (redirect() throws internally, and is NOT caught below
+      // — see the catch block's comment) — only error states reach this
+      // line.
+      setState(result);
+    } catch (err) {
+      // redirect() (a successful submit) works by throwing a Next.js
+      // control-flow error with a `NEXT_REDIRECT` digest, which must be
+      // allowed to propagate so the navigation actually happens — only a
+      // genuine failure (anything else) should be swallowed and surfaced as
+      // an inline error.
+      if (isRedirectError(err)) {
+        throw err;
+      }
+      console.error("ListingForm submit failed", err);
+      setState({
+        status: "error",
+        message:
+          mode === "create"
+            ? "Could not publish your listing. Please try again."
+            : "Could not save changes. Please try again.",
+      });
+    } finally {
+      setSubmitting(false);
+      setUploading(false);
+    }
   }
 
   return (
@@ -355,13 +384,27 @@ function DeleteListingLink({ listingId }: { listingId: string }) {
     setDeleting(true);
     setError(null);
 
-    // On success this redirects server-side to /listings/mine and this
-    // component unmounts before the state updates below ever run.
-    const result = await deleteListing(listingId);
-    setDeleting(false);
+    try {
+      // On success this redirects server-side to /listings/mine and this
+      // component unmounts before the state updates below ever run.
+      const result = await deleteListing(listingId);
+      setDeleting(false);
 
-    if (result.status === "error") {
-      setError(result.message ?? "Could not delete this listing. Please try again.");
+      if (result.status === "error") {
+        setError(result.message ?? "Could not delete this listing. Please try again.");
+      }
+    } catch (err) {
+      // See ListingForm's handleSubmit for why a NEXT_REDIRECT digest must
+      // be allowed to propagate rather than being treated as a failure.
+      if (isRedirectError(err)) {
+        throw err;
+      }
+      // M14 fix: the action call itself can throw (e.g. the request never
+      // reaches the Next.js server at all) — without this catch, that left
+      // the button stuck "Deleting…" forever with no feedback.
+      console.error("DeleteListingLink delete failed", err);
+      setDeleting(false);
+      setError("Could not delete this listing. Please try again.");
     }
   }
 

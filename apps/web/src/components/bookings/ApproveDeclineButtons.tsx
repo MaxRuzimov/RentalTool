@@ -16,30 +16,43 @@ export default function ApproveDeclineButtons({ bookingId }: { bookingId: string
   const [pending, setPending] = useState<"approve" | "decline" | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // M14 fix: both action calls below can throw (e.g. a network failure
+  // reaching the Next.js server) — without try/catch that left the button
+  // stuck "Approving…"/"Declining…" forever with no feedback.
   async function handleApprove() {
     setPending("approve");
     setError(null);
-    const result = await approveBooking(bookingId);
-    setPending(null);
-
-    if (result.status === "error") {
-      setError(result.message ?? "Could not approve this request. Please try again.");
-      return;
+    try {
+      const result = await approveBooking(bookingId);
+      if (result.status === "error") {
+        setError(result.message ?? "Could not approve this request. Please try again.");
+        return;
+      }
+      router.refresh();
+    } catch (err) {
+      console.error("ApproveDeclineButtons approve failed", err);
+      setError("Could not approve this request. Please try again.");
+    } finally {
+      setPending(null);
     }
-    router.refresh();
   }
 
   async function handleDecline() {
     setPending("decline");
     setError(null);
-    const result = await declineBooking(bookingId);
-    setPending(null);
-
-    if (result.status === "error") {
-      setError(result.message ?? "Could not decline this request. Please try again.");
-      return;
+    try {
+      const result = await declineBooking(bookingId);
+      if (result.status === "error") {
+        setError(result.message ?? "Could not decline this request. Please try again.");
+        return;
+      }
+      router.refresh();
+    } catch (err) {
+      console.error("ApproveDeclineButtons decline failed", err);
+      setError("Could not decline this request. Please try again.");
+    } finally {
+      setPending(null);
     }
-    router.refresh();
   }
 
   return (
