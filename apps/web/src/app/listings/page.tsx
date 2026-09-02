@@ -130,7 +130,7 @@ export default async function ListingsIndexPage({
       <form
         method="GET"
         action="/listings"
-        className="mb-6 flex flex-col gap-3 rounded-2xl border border-line p-4 sm:flex-row sm:flex-wrap sm:items-end sm:gap-3"
+        className="mb-6 flex flex-col gap-3 rounded-2xl border border-line bg-surface-muted p-4 sm:flex-row sm:flex-wrap sm:items-end sm:gap-3"
       >
         <label className="flex w-full flex-col gap-1 text-sm sm:w-40">
           <span className="font-medium text-foreground">Category</span>
