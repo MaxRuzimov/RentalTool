@@ -139,159 +139,194 @@ async function uploadNewPhotos(
 /**
  * Creates a new listing (spec §5.1). `owner_id` is always taken from the
  * authenticated session, never from client input.
+ *
+ * M14 fix: the whole body (up to, but not including, the final `redirect()`
+ * calls) runs inside a try/catch. `redirect()` deliberately stays OUTSIDE
+ * that try block — it works by throwing a special Next.js control-flow
+ * error internally, and a blanket catch here would otherwise swallow that
+ * and turn a successful publish into a false "something went wrong" error.
+ * The try/catch itself is a backstop for genuinely unexpected failures (a
+ * network error/timeout talking to Supabase, etc.) that aren't already
+ * surfaced as a checked `{ data, error }` result below — without it, such a
+ * failure would throw all the way out of this Server Action with no
+ * friendly message, which for a caller using a plain `await` (not
+ * `useActionState`) leaves the submit button stuck "Publishing…" forever
+ * (see ListingForm's matching client-side try/catch).
  */
 export async function createListing(formData: FormData): Promise<ListingActionState> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
 
-  if (!user) {
-    return { status: "error", message: "Your session has expired. Please log in again." };
-  }
+  let listingId: string;
+  let photosFailed: boolean;
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-  const parsed = parseListingFields(formData);
-  if ("error" in parsed) {
-    return { status: "error", message: parsed.error };
-  }
+    if (!user) {
+      return { status: "error", message: "Your session has expired. Please log in again." };
+    }
 
-  // Client-side (ListingForm) already enforces this cap, but that's only a
-  // UX nicety — a request built by hand (or a client bug) can still submit
-  // more, so the server action is the actual enforcement boundary. Checked
-  // before creating the listing row so an over-cap submission doesn't leave
-  // behind a listing with no photos attached.
-  const newPhotos = realFilesFrom(formData, "new_photos");
-  if (newPhotos.length > MAX_IMAGES) {
-    return { status: "error", message: `You can upload at most ${MAX_IMAGES} photos per listing.` };
-  }
+    const parsed = parseListingFields(formData);
+    if ("error" in parsed) {
+      return { status: "error", message: parsed.error };
+    }
 
-  const { data: listing, error } = await supabase
-    .from("listings")
-    .insert({ owner_id: user.id, ...parsed.values })
-    .select("id")
-    .single();
+    // Client-side (ListingForm) already enforces this cap, but that's only a
+    // UX nicety — a request built by hand (or a client bug) can still submit
+    // more, so the server action is the actual enforcement boundary. Checked
+    // before creating the listing row so an over-cap submission doesn't leave
+    // behind a listing with no photos attached.
+    const newPhotos = realFilesFrom(formData, "new_photos");
+    if (newPhotos.length > MAX_IMAGES) {
+      return { status: "error", message: `You can upload at most ${MAX_IMAGES} photos per listing.` };
+    }
 
-  if (error || !listing) {
-    console.error(error);
+    const { data: listing, error } = await supabase
+      .from("listings")
+      .insert({ owner_id: user.id, ...parsed.values })
+      .select("id")
+      .single();
+
+    if (error || !listing) {
+      console.error(error);
+      return { status: "error", message: "Could not publish your listing. Please try again." };
+    }
+
+    const { failedCount } = await uploadNewPhotos(supabase, user.id, listing.id, newPhotos, 0);
+    listingId = listing.id;
+    photosFailed = failedCount > 0;
+  } catch (err) {
+    console.error("createListing: unexpected error", err);
     return { status: "error", message: "Could not publish your listing. Please try again." };
   }
 
-  const { failedCount } = await uploadNewPhotos(supabase, user.id, listing.id, newPhotos, 0);
-
-  if (failedCount > 0) {
-    redirect(`/listings/${listing.id}?photoError=1`);
+  if (photosFailed) {
+    redirect(`/listings/${listingId}?photoError=1`);
   }
 
-  redirect(`/listings/${listing.id}`);
+  redirect(`/listings/${listingId}`);
 }
 
 /**
  * Updates an existing listing (spec §5.2). RLS's owner-only update policy is
  * the real authorization boundary; the explicit ownership check here is just
  * what lets us return a friendly error instead of a silent RLS no-op.
+ *
+ * M14 fix: same try/catch-around-everything-but-`redirect()` shape as
+ * createListing above — see that function's comment for why `redirect()`
+ * has to stay outside the try block.
  */
 export async function updateListing(
   listingId: string,
   formData: FormData,
 ): Promise<ListingActionState> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
 
-  if (!user) {
-    return { status: "error", message: "Your session has expired. Please log in again." };
-  }
+  let photosFailed: boolean;
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-  const { data: existing } = await supabase
-    .from("listings")
-    .select("id, owner_id")
-    .eq("id", listingId)
-    .maybeSingle();
+    if (!user) {
+      return { status: "error", message: "Your session has expired. Please log in again." };
+    }
 
-  if (!existing || existing.owner_id !== user.id) {
-    return { status: "error", message: "You do not have permission to edit this listing." };
-  }
+    const { data: existing } = await supabase
+      .from("listings")
+      .select("id, owner_id")
+      .eq("id", listingId)
+      .maybeSingle();
 
-  const parsed = parseListingFields(formData);
-  if ("error" in parsed) {
-    return { status: "error", message: parsed.error };
-  }
+    if (!existing || existing.owner_id !== user.id) {
+      return { status: "error", message: "You do not have permission to edit this listing." };
+    }
 
-  // Images the user kept in the preview grid (in display order); anything
-  // in listing_images not in this set was removed client-side and should be
-  // deleted from Storage + the table further down (spec §4 "removal is
-  // queued... only actually deleted ... on form submit").
-  const keptImageIds = formData.getAll("kept_image_id").map(String);
-  const newPhotos = realFilesFrom(formData, "new_photos");
+    const parsed = parseListingFields(formData);
+    if ("error" in parsed) {
+      return { status: "error", message: parsed.error };
+    }
 
-  // Same server-side cap enforcement as createListing (client-side
-  // ListingForm cap is UX only, not the security/data-integrity boundary).
-  // Checked before the listings.update() below — and before any
-  // Storage/DB writes further down (image removal, upload) — so an
-  // over-cap submission is rejected cleanly with nothing written, rather
-  // than silently saving the text-field changes and only then erroring on
-  // the photos.
-  if (keptImageIds.length + newPhotos.length > MAX_IMAGES) {
-    return { status: "error", message: `You can upload at most ${MAX_IMAGES} photos per listing.` };
-  }
+    // Images the user kept in the preview grid (in display order); anything
+    // in listing_images not in this set was removed client-side and should be
+    // deleted from Storage + the table further down (spec §4 "removal is
+    // queued... only actually deleted ... on form submit").
+    const keptImageIds = formData.getAll("kept_image_id").map(String);
+    const newPhotos = realFilesFrom(formData, "new_photos");
 
-  const { error } = await supabase.from("listings").update(parsed.values).eq("id", listingId);
+    // Same server-side cap enforcement as createListing (client-side
+    // ListingForm cap is UX only, not the security/data-integrity boundary).
+    // Checked before the listings.update() below — and before any
+    // Storage/DB writes further down (image removal, upload) — so an
+    // over-cap submission is rejected cleanly with nothing written, rather
+    // than silently saving the text-field changes and only then erroring on
+    // the photos.
+    if (keptImageIds.length + newPhotos.length > MAX_IMAGES) {
+      return { status: "error", message: `You can upload at most ${MAX_IMAGES} photos per listing.` };
+    }
 
-  if (error) {
-    console.error(error);
+    const { error } = await supabase.from("listings").update(parsed.values).eq("id", listingId);
+
+    if (error) {
+      console.error(error);
+      return { status: "error", message: "Could not save changes. Please try again." };
+    }
+
+    const { data: currentImages } = await supabase
+      .from("listing_images")
+      .select("id, storage_path, position")
+      .eq("listing_id", listingId);
+
+    const toRemove = (currentImages ?? []).filter((img) => !keptImageIds.includes(img.id));
+    if (toRemove.length > 0) {
+      await supabase.storage
+        .from("listing-images")
+        .remove(toRemove.map((img) => img.storage_path));
+      await supabase
+        .from("listing_images")
+        .delete()
+        .in(
+          "id",
+          toRemove.map((img) => img.id),
+        );
+    }
+
+    // Renumber the surviving kept images to contiguous positions 0..k-1 in
+    // their existing relative order (their current `position` ascending —
+    // that's their display order, since removal never reorders the rest).
+    // Without this, removing a non-last image (especially position 0, the
+    // cover image per spec §4) leaves gaps: no image ends up at position 0
+    // (breaking the cover-photo queries on /listings and /listings/mine,
+    // which fetch `.eq("position", 0)`), and uploadNewPhotos's
+    // `startPosition = keptImageIds.length` would otherwise collide with a
+    // kept image's untouched original position — `listing_images.position`
+    // has no uniqueness constraint, so that would silently insert a
+    // duplicate-position row rather than error.
+    const keptImagesInOrder = (currentImages ?? [])
+      .filter((img) => keptImageIds.includes(img.id))
+      .sort((a, b) => a.position - b.position);
+
+    for (let i = 0; i < keptImagesInOrder.length; i++) {
+      if (keptImagesInOrder[i].position !== i) {
+        await supabase.from("listing_images").update({ position: i }).eq("id", keptImagesInOrder[i].id);
+      }
+    }
+
+    const { failedCount } = await uploadNewPhotos(
+      supabase,
+      user.id,
+      listingId,
+      newPhotos,
+      keptImageIds.length,
+    );
+    photosFailed = failedCount > 0;
+  } catch (err) {
+    console.error("updateListing: unexpected error", err);
     return { status: "error", message: "Could not save changes. Please try again." };
   }
 
-  const { data: currentImages } = await supabase
-    .from("listing_images")
-    .select("id, storage_path, position")
-    .eq("listing_id", listingId);
-
-  const toRemove = (currentImages ?? []).filter((img) => !keptImageIds.includes(img.id));
-  if (toRemove.length > 0) {
-    await supabase.storage
-      .from("listing-images")
-      .remove(toRemove.map((img) => img.storage_path));
-    await supabase
-      .from("listing_images")
-      .delete()
-      .in(
-        "id",
-        toRemove.map((img) => img.id),
-      );
-  }
-
-  // Renumber the surviving kept images to contiguous positions 0..k-1 in
-  // their existing relative order (their current `position` ascending —
-  // that's their display order, since removal never reorders the rest).
-  // Without this, removing a non-last image (especially position 0, the
-  // cover image per spec §4) leaves gaps: no image ends up at position 0
-  // (breaking the cover-photo queries on /listings and /listings/mine,
-  // which fetch `.eq("position", 0)`), and uploadNewPhotos's
-  // `startPosition = keptImageIds.length` would otherwise collide with a
-  // kept image's untouched original position — `listing_images.position`
-  // has no uniqueness constraint, so that would silently insert a
-  // duplicate-position row rather than error.
-  const keptImagesInOrder = (currentImages ?? [])
-    .filter((img) => keptImageIds.includes(img.id))
-    .sort((a, b) => a.position - b.position);
-
-  for (let i = 0; i < keptImagesInOrder.length; i++) {
-    if (keptImagesInOrder[i].position !== i) {
-      await supabase.from("listing_images").update({ position: i }).eq("id", keptImagesInOrder[i].id);
-    }
-  }
-
-  const { failedCount } = await uploadNewPhotos(
-    supabase,
-    user.id,
-    listingId,
-    newPhotos,
-    keptImageIds.length,
-  );
-
-  if (failedCount > 0) {
+  if (photosFailed) {
     redirect(`/listings/${listingId}?photoError=1`);
   }
 
@@ -304,43 +339,52 @@ export async function updateListing(
  * owner-only delete policy is the real authorization; `listing_images` rows
  * cascade automatically via the FK). Shared by the edit page's "Delete
  * listing" button and /listings/mine's inline delete action.
+ *
+ * M14 fix: same try/catch-around-everything-but-`redirect()` shape as
+ * createListing/updateListing above.
  */
 export async function deleteListing(listingId: string): Promise<ListingActionState> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
 
-  if (!user) {
-    return { status: "error", message: "Your session has expired. Please log in again." };
-  }
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-  const { data: existing } = await supabase
-    .from("listings")
-    .select("id, owner_id")
-    .eq("id", listingId)
-    .maybeSingle();
+    if (!user) {
+      return { status: "error", message: "Your session has expired. Please log in again." };
+    }
 
-  if (!existing || existing.owner_id !== user.id) {
-    return { status: "error", message: "You do not have permission to delete this listing." };
-  }
+    const { data: existing } = await supabase
+      .from("listings")
+      .select("id, owner_id")
+      .eq("id", listingId)
+      .maybeSingle();
 
-  const { data: images } = await supabase
-    .from("listing_images")
-    .select("storage_path")
-    .eq("listing_id", listingId);
+    if (!existing || existing.owner_id !== user.id) {
+      return { status: "error", message: "You do not have permission to delete this listing." };
+    }
 
-  const { error } = await supabase.from("listings").delete().eq("id", listingId);
+    const { data: images } = await supabase
+      .from("listing_images")
+      .select("storage_path")
+      .eq("listing_id", listingId);
 
-  if (error) {
-    console.error(error);
+    const { error } = await supabase.from("listings").delete().eq("id", listingId);
+
+    if (error) {
+      console.error(error);
+      return { status: "error", message: "Could not delete this listing. Please try again." };
+    }
+
+    if (images && images.length > 0) {
+      await supabase.storage
+        .from("listing-images")
+        .remove(images.map((img) => img.storage_path));
+    }
+  } catch (err) {
+    console.error("deleteListing: unexpected error", err);
     return { status: "error", message: "Could not delete this listing. Please try again." };
-  }
-
-  if (images && images.length > 0) {
-    await supabase.storage
-      .from("listing-images")
-      .remove(images.map((img) => img.storage_path));
   }
 
   redirect("/listings/mine");
