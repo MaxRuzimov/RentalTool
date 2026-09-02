@@ -20,10 +20,10 @@ import { useEffect } from "react";
  */
 export default function GlobalErrorBoundary({
   error,
-  retry,
+  reset,
 }: {
   error: Error & { digest?: string };
-  retry: () => void;
+  reset: () => void;
 }) {
   useEffect(() => {
     console.error("Unhandled application error", error);
@@ -41,7 +41,7 @@ export default function GlobalErrorBoundary({
       <div className="mt-2 flex items-center gap-3">
         <button
           type="button"
-          onClick={() => retry()}
+          onClick={() => reset()}
           className="flex h-10 items-center justify-center rounded-full bg-primary px-5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-hover active:bg-primary-active focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
           Try again
