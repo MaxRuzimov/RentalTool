@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { logout } from "@/lib/auth/actions";
+import LogoutButton from "./LogoutButton";
 
 /**
  * Site header / nav (spec §1). Server Component so auth state is read from
@@ -77,12 +78,7 @@ export default async function Header() {
               {fullName || "Account"}
             </Link>
             <form action={logout}>
-              <button
-                type="submit"
-                className="flex h-9 items-center justify-center rounded-full border border-line px-4 transition-colors hover:border-transparent hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-              >
-                Log out
-              </button>
+              <LogoutButton />
             </form>
           </>
         ) : (
