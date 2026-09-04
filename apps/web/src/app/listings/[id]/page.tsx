@@ -61,6 +61,28 @@ export default async function ListingDetailPage({
 
   const isOwner = user?.id === listing.owner_id;
 
+  // M15 (spec §2.3): approved-booking date ranges for the "Unavailable
+  // dates" callout + client-side overlap validation in RequestToRentForm.
+  // Only fetched for the non-owner branch — the owner-of-own-listing branch
+  // (§3.1.C below) never renders RequestToRentForm at all, so there's
+  // nothing to pass it. Fail open on error (empty array + a logged error),
+  // same convention as this page's own photoError handling above: a missing
+  // client-side hint degrades the UX for one page load, it never allows an
+  // actual double-booking — the server-side checkpoints in
+  // createBookingRequest/approveBooking (unchanged by this milestone) remain
+  // the real source of truth.
+  let unavailableRows: { start_date: string; end_date: string }[] = [];
+  if (!isOwner) {
+    const { data, error } = await supabase.rpc("listing_approved_booking_ranges", {
+      p_listing_id: id,
+    });
+    if (error) {
+      console.error("listing_approved_booking_ranges failed", error);
+    } else {
+      unavailableRows = data ?? [];
+    }
+  }
+
   // Reviews (spec §6): one query for the ordered list, joined to
   // public_profiles for the reviewer's display name (same view used for the
   // owner block above — no new profile-visibility surface); the aggregate
@@ -197,6 +219,10 @@ export default async function ListingDetailPage({
             priceUnit={listing.price_unit}
             loggedIn={Boolean(user)}
             loginRedirectTo={`/listings/${listing.id}`}
+            unavailableRanges={unavailableRows.map((r) => ({
+              startDate: r.start_date,
+              endDate: r.end_date,
+            }))}
           />
         )}
       </div>
