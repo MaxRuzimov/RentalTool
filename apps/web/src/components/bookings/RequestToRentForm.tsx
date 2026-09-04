@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useMemo, useState, type FormEvent } from "react";
 import Spinner from "@/components/ui/Spinner";
 import { createBookingRequest, type BookingActionState } from "@/app/bookings/actions";
-import { dayCount, estimatePrice, formatMoney, todayISODate } from "@/lib/bookings/pricing";
+import { dayCount, estimatePrice, formatDateRange, formatMoney, todayISODate } from "@/lib/bookings/pricing";
 import { isRedirectError } from "@/lib/forms/isRedirectError";
 
 const PRIMARY_BUTTON =
@@ -26,12 +26,14 @@ export default function RequestToRentForm({
   priceUnit,
   loggedIn,
   loginRedirectTo,
+  unavailableRanges,
 }: {
   listingId: string;
   priceAmount: number;
   priceUnit: string;
   loggedIn: boolean;
   loginRedirectTo: string;
+  unavailableRanges: { startDate: string; endDate: string }[];
 }) {
   // todayISODate() computes the calendar date in a fixed America/Toronto
   // zone (Intl.DateTimeFormat), not the machine's local zone, so this is
@@ -52,12 +54,32 @@ export default function RequestToRentForm({
     }
   }
 
-  // Exact validation copy from spec §3.2/§11.
+  // M15 (spec §4): shared inclusive-interval overlap test, identical to the
+  // one `booking_has_approved_overlap` already runs server-side. Plain
+  // `YYYY-MM-DD` string comparison — no `Date` object parsing — matches the
+  // TZ-safety convention already used everywhere else in this file (and
+  // string comparison on `YYYY-MM-DD` sorts identically to date-value
+  // comparison, so this is safe). Inclusive on both sides: a blocked range
+  // ending e.g. `2026-08-16` also blocks `2026-08-16` as a new start date
+  // (same-day handoff is not allowed, spec §4's adjacency edge case).
+  const hasOverlap =
+    Boolean(startDate) &&
+    Boolean(endDate) &&
+    endDate >= startDate &&
+    unavailableRanges.some((range) => range.startDate <= endDate && range.endDate >= startDate);
+
+  // Exact validation copy from spec §3.2/§11, extended by M15 spec §6.1 with
+  // the overlap check as the new lowest-priority branch — it only runs once
+  // the existing two checks already pass (an incomplete/inverted range is
+  // reported first). `datesValid` transitively gates on "not overlapping"
+  // too, so no separate disabled-state wiring is needed beyond this.
   const validationMessage = !startDate
     ? "Please choose a start date."
     : !endDate || endDate < startDate
       ? "End date must be on or after the start date."
-      : null;
+      : hasOverlap
+        ? "Those dates overlap an approved booking. Please choose different dates."
+        : null;
   const datesValid = validationMessage === null;
 
   const days = datesValid ? dayCount(startDate, endDate) : 0;
@@ -98,6 +120,23 @@ export default function RequestToRentForm({
   return (
     <div className="rounded-2xl border border-line p-4">
       <h2 className="text-lg font-semibold text-foreground">Request to rent this tool</h2>
+
+      {unavailableRanges.length > 0 && (
+        <div className="mt-3 rounded-lg border border-line bg-surface-muted p-3">
+          <p className="text-sm font-medium text-foreground">Unavailable dates</p>
+          <ul className="mt-1 list-disc pl-5 text-sm text-foreground">
+            {unavailableRanges.map((range) => (
+              <li key={`${range.startDate}_${range.endDate}`}>
+                {formatDateRange(range.startDate, range.endDate)}
+              </li>
+            ))}
+          </ul>
+          <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
+            The listed end date is included in the booking — a new rental can&apos;t start until
+            the day after.
+          </p>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="mt-3 flex flex-col gap-3">
         <div className="flex flex-col gap-3 sm:flex-row">
