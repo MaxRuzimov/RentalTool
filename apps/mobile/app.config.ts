@@ -32,8 +32,36 @@ const config: ExpoConfig = {
   userInterfaceStyle: "automatic",
   ios: {
     supportsTablet: true,
+    // M11: Apple submission is deferred (Google Play only for now), but set
+    // this now anyway — cheap to add, and it keeps EAS config validation
+    // happy for both platforms. Matches the Android package below; not used
+    // for any real iOS build/submit work in M11.
+    bundleIdentifier: "com.rentaltool.app",
   },
   android: {
+    // M11: Google Play requires a permanent reverse-domain application ID
+    // that CANNOT be changed after the app's first published release (Play
+    // Console treats it as the app's permanent identity — a rename means
+    // publishing as a brand-new, zero-install-history app). Not previously
+    // set anywhere in this repo (verified via `git log -p` on this file and
+    // a repo-wide grep for "com.rentaltool" — no prior/reserved value
+    // exists). "com.rentaltool.app" was chosen as the obvious
+    // reverse-domain form of this product's name; flagged prominently here
+    // and in the M11 handoff report for a stakeholder sanity-check before
+    // this is ever actually published, precisely because it's irreversible.
+    package: "com.rentaltool.app",
+    // Android versionCode: intentionally NOT hand-set here. eas.json's
+    // `cli.appVersionSource: "remote"` + the `production` build profile's
+    // `autoIncrement: true` let EAS itself track and bump the versionCode
+    // per build on EAS's servers — this is the current EAS/Expo SDK 57
+    // convention (`eas.json` docs, "Remote version source") and is the
+    // more standard, less error-prone option vs. hand-maintaining a
+    // `versionCode` integer in this file (which is easy to forget to bump
+    // before a build and has caused real Play Console "version code
+    // already used" rejections industry-wide). If EAS's remote versioning
+    // is ever abandoned in favor of local versioning, set
+    // `android.versionCode: 1` here as the starting value and bump by hand
+    // per release.
     adaptiveIcon: {
       backgroundColor: "#ffffff",
       foregroundImage: "./assets/images/android-icon-foreground.png",
