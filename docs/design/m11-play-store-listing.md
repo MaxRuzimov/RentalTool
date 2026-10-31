@@ -37,7 +37,9 @@ RentalTool is in its early stages, focused on making it easy to find and request
 
 **Category**: Play Console will ask for a primary category — recommend "Lifestyle" or "House & Home" (no dedicated "marketplace/rental" category exists as of this writing; either is a defensible fit, Max's call, low-stakes and changeable later).
 
-**Feature graphic (1024x500 px, required)** and **screenshots**: not produced in this pass — see §4 below for what's blocking these and the plan to close that gap.
+**Feature graphic (1024x500 px, required)**: done — `docs/design/play-store-assets/feature-graphic-1024x500.png`, produced after this doc was first drafted (see MILESTONES.md M11 history). Play's separate 512x512 hi-res store-listing icon is also done: `docs/design/play-store-assets/playstore-icon-512.png`.
+
+**Screenshots**: not produced — this is the one asset still genuinely blocked. See §4 below for why and what's needed to close the gap.
 
 ## 2. Data safety section — draft answers
 
@@ -74,9 +76,11 @@ Google Play generates the actual content rating (via IARC) from a questionnaire 
 - User interaction / sharing personal info: Yes — the app lets users exchange phone numbers (gated to approved bookings only, per §2) and see each other's names/reviews. Answer the "does your app allow users to share personal information with other users" question honestly as Yes, scoped to that specific, narrow mechanism.
 - Digital purchases: None (no in-app purchases or payment feature).
 
-## 4. What's still blocked and why (screenshots / feature graphic)
+## 4. What's still blocked and why (screenshots)
 
-Producing real Play-Store-quality screenshots and a 1024x500 feature graphic needs either a running Android emulator/device or real design-tool output — see the mobile-engineer's M11 prep report (branch `feature/m11-play-store-prep`) for exactly what was/wasn't achievable in this environment. Whatever that report says should be treated as the up-to-date status; this doc doesn't duplicate it since it can go stale. If a genuine device/emulator screenshot isn't available from this environment, that's expected — flagged for Max to capture from his own device/an Android Studio emulator once he has the app running, or the mobile-engineer's best-effort web-rendered drafts (if produced) can serve as a placeholder for review purposes only.
+Update: the feature graphic and the 512x512 Play Store icon were produced in a later pass (see §1) — those are no longer blocked. The one asset still genuinely outstanding is real device screenshots.
+
+Producing real Play-Store-quality screenshots needs either a running Android emulator/device or real design-tool output — see the mobile-engineer's M11 prep report (branch `feature/m11-play-store-prep`, merged into main) for exactly what was/wasn't achievable in this environment. This sandbox has no Android emulator available, so this remains blocked on Max: capture screenshots from his own device, or an Android Studio emulator, once he has the app running (which itself needs an EAS build — see MILESTONES.md M11 for the Expo-account status blocking that).
 
 ## 5. Sources for the Data Safety / content rating answers above
 
