@@ -23,12 +23,24 @@ if (!supabaseUrl || !supabaseAnonKey) {
 }
 
 const config: ExpoConfig = {
-  name: "mobile",
-  slug: "mobile",
+  // M11: these three were leftover `create-expo-app` scaffold defaults
+  // ("mobile") never updated when this project was rebranded to
+  // RentalTool — `name` is the actual display name shown under the app
+  // icon on the Android home screen (and what EAS pre-fills into Play
+  // Console metadata), so a real device would otherwise show "mobile"
+  // under the new RentalTool icon, inconsistent with all the other M11
+  // branding work. `slug` (EAS project slug) and `scheme` (deep-link URL
+  // scheme) were safe to rename alongside it: verified via grep that
+  // there is no `extra.eas.projectId` anywhere in this file, meaning
+  // this project has never been through `eas init`/linked to a real EAS
+  // project identity yet, and a repo-wide grep of apps/mobile found no
+  // code referencing the `mobile://` URL scheme or any deep links.
+  name: "RentalTool",
+  slug: "rentaltool",
   version: "1.0.0",
   orientation: "portrait",
   icon: "./assets/images/icon.png",
-  scheme: "mobile",
+  scheme: "rentaltool",
   userInterfaceStyle: "automatic",
   ios: {
     supportsTablet: true,
