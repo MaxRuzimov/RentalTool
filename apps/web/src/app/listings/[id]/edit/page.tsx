@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { signImageUrls } from "@/lib/listings/storage";
+import { signImageUrls, signVideoUrl } from "@/lib/listings/storage";
 import ListingForm from "@/components/listings/ListingForm";
 
 // Route protection (spec §6): auth required, owner only. Ownership check
@@ -64,6 +64,16 @@ export default async function EditListingPage({
     .map((img) => ({ id: img.id, url: urlByPath.get(img.storage_path) ?? "" }))
     .filter((img) => img.url);
 
+  const { data: videoRow } = await supabase
+    .from("listing_videos")
+    .select("id, storage_path")
+    .eq("listing_id", id)
+    .maybeSingle();
+
+  const initialVideoUrl = videoRow ? await signVideoUrl(supabase, videoRow.storage_path) : null;
+  const initialVideo =
+    videoRow && initialVideoUrl ? { id: videoRow.id, url: initialVideoUrl } : undefined;
+
   return (
     <ListingForm
       mode="edit"
@@ -77,6 +87,7 @@ export default async function EditListingPage({
         location: listing.location,
       }}
       initialImages={initialImages}
+      initialVideo={initialVideo}
     />
   );
 }

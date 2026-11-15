@@ -1,8 +1,10 @@
 "use client";
 
 import { useRef, useState, type FormEvent, type RefObject } from "react";
+import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
 import Spinner from "@/components/ui/Spinner";
+import { createClient } from "@/lib/supabase/client";
 import { LISTING_CATEGORIES, PRICE_UNITS } from "@/lib/listings/categories";
 import {
   ACCEPT_ATTR,
@@ -11,11 +13,19 @@ import {
   isAcceptedImageFile,
 } from "@/lib/listings/images";
 import {
+  MAX_VIDEO_DURATION_SECONDS,
+  MAX_VIDEO_FILE_SIZE_BYTES,
+  VIDEO_ACCEPT_ATTR,
+  getVideoDuration,
+  isAcceptedVideoFile,
+} from "@/lib/listings/video";
+import {
   createListing,
   updateListing,
   deleteListing,
   type ListingActionState,
 } from "@/app/listings/actions";
+import { syncListingMedia, type VideoSyncInstruction } from "@/lib/listings/clientUpload";
 import { isRedirectError } from "@/lib/forms/isRedirectError";
 
 export type ListingFormInitialValues = {
@@ -28,10 +38,15 @@ export type ListingFormInitialValues = {
 };
 
 export type ListingFormInitialImage = { id: string; url: string };
+export type ListingFormInitialVideo = { id: string; url: string };
 
 type StagedPhoto =
   | { key: string; kind: "existing"; id: string; url: string }
   | { key: string; kind: "new"; file: File; previewUrl: string };
+
+type StagedVideo =
+  | { kind: "existing"; id: string; url: string }
+  | { kind: "new"; file: File; previewUrl: string };
 
 const DEFAULT_VALUES: ListingFormInitialValues = {
   title: "",
@@ -53,15 +68,19 @@ export default function ListingForm({
   listingId,
   initial,
   initialImages = [],
+  initialVideo,
 }: {
   mode: "create" | "edit";
   listingId?: string;
   initial?: ListingFormInitialValues;
   initialImages?: ListingFormInitialImage[];
+  initialVideo?: ListingFormInitialVideo;
 }) {
+  const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
+  const videoInputRef = useRef<HTMLInputElement>(null);
 
   const values = initial ?? DEFAULT_VALUES;
 
@@ -69,6 +88,16 @@ export default function ListingForm({
     initialImages.map((img) => ({ key: img.id, kind: "existing", id: img.id, url: img.url })),
   );
   const [photoNote, setPhotoNote] = useState<string | null>(null);
+  // The existing video's id (if any) never changes after mount — kept
+  // outside `video` state so that removing it client-side (which sets
+  // `video` to null) can still be distinguished from "never had a video" on
+  // submit (see handleSubmit's `remove_video` flag below).
+  const [initialVideoId] = useState<string | null>(initialVideo?.id ?? null);
+  const [video, setVideo] = useState<StagedVideo | null>(
+    initialVideo ? { kind: "existing", id: initialVideo.id, url: initialVideo.url } : null,
+  );
+  const [videoNote, setVideoNote] = useState<string | null>(null);
+  const [checkingVideo, setCheckingVideo] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [state, setState] = useState<ListingActionState>({ status: "idle" });
@@ -121,27 +150,70 @@ export default function ListingForm({
     });
   }
 
+  async function handleVideoSelected(
+    fileList: FileList | null,
+    inputRef: RefObject<HTMLInputElement | null>,
+  ) {
+    if (!fileList || fileList.length === 0) return;
+    const file = fileList[0];
+
+    function reject(message: string) {
+      setVideoNote(message);
+      if (inputRef.current) inputRef.current.value = "";
+    }
+
+    if (!isAcceptedVideoFile(file)) {
+      reject(`${file.name} is not a supported video type — skipped.`);
+      return;
+    }
+    if (file.size > MAX_VIDEO_FILE_SIZE_BYTES) {
+      reject(`${file.name} is larger than 75MB — skipped.`);
+      return;
+    }
+
+    setCheckingVideo(true);
+    try {
+      const duration = await getVideoDuration(file);
+      if (duration > MAX_VIDEO_DURATION_SECONDS) {
+        reject("Videos must be 60 seconds or shorter — skipped.");
+        return;
+      }
+    } catch (err) {
+      console.error("getVideoDuration failed", err);
+      reject(`${file.name} could not be read — skipped.`);
+      return;
+    } finally {
+      setCheckingVideo(false);
+    }
+
+    setVideo({ kind: "new", file, previewUrl: URL.createObjectURL(file) });
+    setVideoNote(null);
+    if (inputRef.current) inputRef.current.value = "";
+  }
+
+  function removeVideo() {
+    setVideo((prev) => {
+      if (prev?.kind === "new") URL.revokeObjectURL(prev.previewUrl);
+      return null;
+    });
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!formRef.current) return;
 
     setState({ status: "idle" });
     setSubmitting(true);
-    setUploading(photos.some((p) => p.kind === "new"));
 
+    // Fields-only payload (spec §8 addendum): no file bytes travel through
+    // this FormData/Server Action call anymore. Photos/video live in React
+    // state and are uploaded separately, straight from the browser to
+    // Supabase Storage, only after the fields below have been saved. Note
+    // this is already true of `new FormData(formRef.current)` itself: the
+    // photo/video `<input type="file">` elements below are deliberately left
+    // without a `name` attribute, so the browser never serializes them into
+    // FormData in the first place — there's nothing to strip here.
     const formData = new FormData(formRef.current);
-    // Text/select/number fields are already captured by `new FormData(form)`
-    // above via their `name` attributes; photos are appended manually since
-    // they live in React state (add/remove), not directly bound to the
-    // native file input's value (see §4 of the spec for the UX this drives).
-    formData.delete("photos_input");
-    for (const photo of photos) {
-      if (photo.kind === "existing") {
-        formData.append("kept_image_id", photo.id);
-      } else {
-        formData.append("new_photos", photo.file, photo.file.name);
-      }
-    }
 
     // M14 fix: the action call itself can throw — not just resolve with an
     // `{ status: "error" }` object — if the request never reaches the Next.js
@@ -156,20 +228,70 @@ export default function ListingForm({
           ? await createListing(formData)
           : await updateListing(listingId as string, formData);
 
-      // A successful create/update redirects server-side and never returns
-      // a value here (redirect() throws internally, and is NOT caught below
-      // — see the catch block's comment) — only error states reach this
-      // line.
-      setState(result);
-    } catch (err) {
-      // redirect() (a successful submit) works by throwing a Next.js
-      // control-flow error with a `NEXT_REDIRECT` digest, which must be
-      // allowed to propagate so the navigation actually happens — only a
-      // genuine failure (anything else) should be swallowed and surfaced as
-      // an inline error.
-      if (isRedirectError(err)) {
-        throw err;
+      if (result.status === "error") {
+        setState(result);
+        return;
       }
+      if (result.status !== "success") {
+        // createListing/updateListing never actually resolve "idle" — this
+        // is just here so TypeScript's narrowing below is sound.
+        return;
+      }
+
+      const savedListingId = result.listingId;
+      const newPhotoFiles = photos.filter((p) => p.kind === "new").map((p) => p.file);
+      const keptImageIds = photos.filter((p) => p.kind === "existing").map((p) => p.id);
+      const videoInstruction: VideoSyncInstruction =
+        video?.kind === "new"
+          ? { kind: "new", file: video.file }
+          : !video && initialVideoId
+            ? { kind: "remove" }
+            : { kind: "none" };
+
+      setUploading(newPhotoFiles.length > 0 || videoInstruction.kind === "new");
+
+      let photosFailed = false;
+      let videoFailed = false;
+
+      try {
+        const supabase = createClient();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+
+        if (!user) {
+          // Session disappeared between the server action succeeding and
+          // now — extremely unlikely, but the listing's fields are already
+          // saved, so surface this the same way a media-upload failure is
+          // surfaced rather than silently losing the save.
+          photosFailed = newPhotoFiles.length > 0;
+          videoFailed = videoInstruction.kind === "new";
+        } else {
+          const syncResult = await syncListingMedia(supabase, {
+            ownerId: user.id,
+            listingId: savedListingId,
+            keptImageIds,
+            newPhotoFiles,
+            video: videoInstruction,
+          });
+          photosFailed = syncResult.photosFailed;
+          videoFailed = syncResult.videoFailed;
+        }
+      } catch (err) {
+        console.error("ListingForm media sync failed", err);
+        photosFailed = photosFailed || newPhotoFiles.length > 0;
+        videoFailed = videoFailed || videoInstruction.kind === "new";
+      } finally {
+        setUploading(false);
+      }
+
+      const failureParams = new URLSearchParams();
+      if (photosFailed) failureParams.set("photoError", "1");
+      if (videoFailed) failureParams.set("videoError", "1");
+      const query = failureParams.toString();
+
+      router.push(`/listings/${savedListingId}${query ? `?${query}` : ""}`);
+    } catch (err) {
       console.error("ListingForm submit failed", err);
       setState({
         status: "error",
@@ -372,11 +494,61 @@ export default function ListingForm({
                 ))}
               </div>
             )}
+          </div>
 
-            {uploading && (
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">Uploading photos…</p>
+          <div className="flex flex-col gap-2">
+            <span className="text-sm font-medium text-foreground">Video (optional)</span>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              Show the tool in action — up to 60 seconds.
+            </p>
+
+            {videoNote && <p className="text-xs text-danger">{videoNote}</p>}
+
+            {video ? (
+              <div className="relative">
+                <video
+                  controls
+                  src={video.kind === "existing" ? video.url : video.previewUrl}
+                  className="aspect-video max-h-64 w-full rounded-lg border border-line bg-black object-cover"
+                />
+                <button
+                  type="button"
+                  onClick={removeVideo}
+                  aria-label="Remove video"
+                  className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/60 text-xs leading-none text-white hover:bg-black/80"
+                >
+                  <X className="h-3.5 w-3.5" aria-hidden="true" />
+                </button>
+              </div>
+            ) : (
+              <label
+                className={`flex h-24 w-full cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-line-strong text-sm text-zinc-500 dark:text-zinc-400 ${
+                  checkingVideo ? "pointer-events-none opacity-50" : "hover:border-primary"
+                }`}
+              >
+                {checkingVideo ? "Checking video…" : "Add video"}
+                <input
+                  id="video_input"
+                  ref={videoInputRef}
+                  type="file"
+                  accept={VIDEO_ACCEPT_ATTR}
+                  disabled={checkingVideo}
+                  onChange={(e) => handleVideoSelected(e.target.files, videoInputRef)}
+                  className="hidden"
+                />
+              </label>
             )}
           </div>
+
+          {uploading && (
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              {photos.some((p) => p.kind === "new") && video?.kind === "new"
+                ? "Uploading photos and video…"
+                : video?.kind === "new"
+                  ? "Uploading video…"
+                  : "Uploading photos…"}
+            </p>
+          )}
 
           {state.status === "error" && <p className="text-sm text-danger">{state.message}</p>}
 

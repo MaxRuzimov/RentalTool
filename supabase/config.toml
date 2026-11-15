@@ -126,6 +126,15 @@ public = false
 file_size_limit = "5MiB"
 allowed_mime_types = ["image/jpeg", "image/png", "image/webp"]
 
+# M16: listing video (optional, 1 per listing). Private bucket — reads are
+# authorized via storage.objects RLS policies (see the listing_videos
+# migration), not the bucket-level `public` flag, same documented tradeoff
+# as listing-images.
+[storage.buckets.listing-videos]
+public = false
+file_size_limit = "75MiB"
+allowed_mime_types = ["video/mp4", "video/quicktime"]
+
 # Allow connections via S3 compatible clients
 [storage.s3_protocol]
 enabled = true

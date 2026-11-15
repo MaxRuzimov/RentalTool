@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { signImageUrls } from "@/lib/listings/storage";
+import { signImageUrls, signVideoUrl } from "@/lib/listings/storage";
 import { categoryLabel, formatPrice } from "@/lib/listings/categories";
 import ImagePlaceholder from "@/components/listings/ImagePlaceholder";
 import OwnerAvatar from "@/components/listings/OwnerAvatar";
@@ -19,10 +19,10 @@ export default async function ListingDetailPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ photoError?: string }>;
+  searchParams: Promise<{ photoError?: string; videoError?: string }>;
 }) {
   const { id } = await params;
-  const { photoError } = await searchParams;
+  const { photoError, videoError } = await searchParams;
 
   const supabase = await createClient();
   const {
@@ -52,6 +52,17 @@ export default async function ListingDetailPage({
   const photoUrls = (images ?? [])
     .map((img) => urlByPath.get(img.storage_path))
     .filter((url): url is string => Boolean(url));
+
+  // M16: the listing's single optional video (spec §5). Omitted entirely on
+  // the page if there's no row — unlike photos, there's no "empty" video
+  // placeholder.
+  const { data: videoRow } = await supabase
+    .from("listing_videos")
+    .select("storage_path")
+    .eq("listing_id", id)
+    .maybeSingle();
+
+  const videoUrl = videoRow ? await signVideoUrl(supabase, videoRow.storage_path) : null;
 
   const { data: owner } = await supabase
     .from("public_profiles")
@@ -123,6 +134,12 @@ export default async function ListingDetailPage({
         </p>
       )}
 
+      {videoError && (
+        <p className="mb-4 text-sm text-danger">
+          Listing saved, but the video failed to upload. You can add a video from the edit page.
+        </p>
+      )}
+
       {photoUrls.length > 0 ? (
         <div>
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -147,6 +164,15 @@ export default async function ListingDetailPage({
         </div>
       ) : (
         <ImagePlaceholder className="aspect-video w-full rounded-2xl" />
+      )}
+
+      {videoUrl && (
+        <video
+          controls
+          preload="metadata"
+          src={videoUrl}
+          className="mt-4 aspect-video w-full rounded-2xl bg-black"
+        />
       )}
 
       <div className="mt-6 flex items-start justify-between gap-4">

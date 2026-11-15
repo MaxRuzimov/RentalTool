@@ -34,3 +34,24 @@ export async function signImageUrls(
   }
   return result;
 }
+
+/**
+ * Same private-bucket-plus-signed-URL pattern as signImageUrls above, for
+ * the `listing-videos` bucket (spec docs/design/video-upload-spec.md §5).
+ * There is at most one video per listing, so this signs a single path
+ * rather than a batch.
+ */
+export async function signVideoUrl(
+  supabase: SupabaseClient,
+  path: string,
+): Promise<string | null> {
+  const { data, error } = await supabase.storage
+    .from("listing-videos")
+    .createSignedUrl(path, SIGNED_URL_EXPIRY_SECONDS);
+
+  if (error || !data?.signedUrl) {
+    console.error("createSignedUrl (video) failed", error);
+    return null;
+  }
+  return data.signedUrl;
+}
