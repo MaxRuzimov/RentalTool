@@ -11,6 +11,13 @@ import {
   isAcceptedImageFile,
 } from "@/lib/listings/images";
 import {
+  MAX_VIDEO_DURATION_SECONDS,
+  MAX_VIDEO_FILE_SIZE_BYTES,
+  VIDEO_ACCEPT_ATTR,
+  getVideoDuration,
+  isAcceptedVideoFile,
+} from "@/lib/listings/video";
+import {
   createListing,
   updateListing,
   deleteListing,
@@ -28,10 +35,15 @@ export type ListingFormInitialValues = {
 };
 
 export type ListingFormInitialImage = { id: string; url: string };
+export type ListingFormInitialVideo = { id: string; url: string };
 
 type StagedPhoto =
   | { key: string; kind: "existing"; id: string; url: string }
   | { key: string; kind: "new"; file: File; previewUrl: string };
+
+type StagedVideo =
+  | { kind: "existing"; id: string; url: string }
+  | { kind: "new"; file: File; previewUrl: string };
 
 const DEFAULT_VALUES: ListingFormInitialValues = {
   title: "",
@@ -53,15 +65,18 @@ export default function ListingForm({
   listingId,
   initial,
   initialImages = [],
+  initialVideo,
 }: {
   mode: "create" | "edit";
   listingId?: string;
   initial?: ListingFormInitialValues;
   initialImages?: ListingFormInitialImage[];
+  initialVideo?: ListingFormInitialVideo;
 }) {
   const formRef = useRef<HTMLFormElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
+  const videoInputRef = useRef<HTMLInputElement>(null);
 
   const values = initial ?? DEFAULT_VALUES;
 
@@ -69,6 +84,16 @@ export default function ListingForm({
     initialImages.map((img) => ({ key: img.id, kind: "existing", id: img.id, url: img.url })),
   );
   const [photoNote, setPhotoNote] = useState<string | null>(null);
+  // The existing video's id (if any) never changes after mount — kept
+  // outside `video` state so that removing it client-side (which sets
+  // `video` to null) can still be distinguished from "never had a video" on
+  // submit (see handleSubmit's `remove_video` flag below).
+  const [initialVideoId] = useState<string | null>(initialVideo?.id ?? null);
+  const [video, setVideo] = useState<StagedVideo | null>(
+    initialVideo ? { kind: "existing", id: initialVideo.id, url: initialVideo.url } : null,
+  );
+  const [videoNote, setVideoNote] = useState<string | null>(null);
+  const [checkingVideo, setCheckingVideo] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [state, setState] = useState<ListingActionState>({ status: "idle" });
@@ -121,13 +146,63 @@ export default function ListingForm({
     });
   }
 
+  async function handleVideoSelected(
+    fileList: FileList | null,
+    inputRef: RefObject<HTMLInputElement | null>,
+  ) {
+    if (!fileList || fileList.length === 0) return;
+    const file = fileList[0];
+
+    function reject(message: string) {
+      setVideoNote(message);
+      if (inputRef.current) inputRef.current.value = "";
+    }
+
+    if (!isAcceptedVideoFile(file)) {
+      reject(`${file.name} is not a supported video type — skipped.`);
+      return;
+    }
+    if (file.size > MAX_VIDEO_FILE_SIZE_BYTES) {
+      reject(`${file.name} is larger than 75MB — skipped.`);
+      return;
+    }
+
+    setCheckingVideo(true);
+    try {
+      const duration = await getVideoDuration(file);
+      if (duration > MAX_VIDEO_DURATION_SECONDS) {
+        reject("Videos must be 60 seconds or shorter — skipped.");
+        return;
+      }
+    } catch (err) {
+      console.error("getVideoDuration failed", err);
+      reject(`${file.name} could not be read — skipped.`);
+      return;
+    } finally {
+      setCheckingVideo(false);
+    }
+
+    setVideo({ kind: "new", file, previewUrl: URL.createObjectURL(file) });
+    setVideoNote(null);
+    if (inputRef.current) inputRef.current.value = "";
+  }
+
+  function removeVideo() {
+    setVideo((prev) => {
+      if (prev?.kind === "new") URL.revokeObjectURL(prev.previewUrl);
+      return null;
+    });
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!formRef.current) return;
 
     setState({ status: "idle" });
     setSubmitting(true);
-    setUploading(photos.some((p) => p.kind === "new"));
+    const hasNewPhotos = photos.some((p) => p.kind === "new");
+    const hasNewVideo = video?.kind === "new";
+    setUploading(hasNewPhotos || hasNewVideo);
 
     const formData = new FormData(formRef.current);
     // Text/select/number fields are already captured by `new FormData(form)`
@@ -141,6 +216,18 @@ export default function ListingForm({
       } else {
         formData.append("new_photos", photo.file, photo.file.name);
       }
+    }
+
+    // Same staged-upload pattern as photos, adapted for a single optional
+    // video (spec §4 "Submit behavior"): a newly-staged file is appended for
+    // upload; an existing video that was removed client-side (and not
+    // replaced by a new one) is flagged for deletion; an untouched existing
+    // video needs no field at all (the server leaves it alone).
+    formData.delete("video_input");
+    if (video?.kind === "new") {
+      formData.append("new_video", video.file, video.file.name);
+    } else if (!video && initialVideoId) {
+      formData.append("remove_video", "1");
     }
 
     // M14 fix: the action call itself can throw — not just resolve with an
@@ -372,11 +459,61 @@ export default function ListingForm({
                 ))}
               </div>
             )}
+          </div>
 
-            {uploading && (
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">Uploading photos…</p>
+          <div className="flex flex-col gap-2">
+            <span className="text-sm font-medium text-foreground">Video (optional)</span>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              Show the tool in action — up to 60 seconds.
+            </p>
+
+            {videoNote && <p className="text-xs text-danger">{videoNote}</p>}
+
+            {video ? (
+              <div className="relative">
+                <video
+                  controls
+                  src={video.kind === "existing" ? video.url : video.previewUrl}
+                  className="aspect-video max-h-64 w-full rounded-lg border border-line bg-black object-cover"
+                />
+                <button
+                  type="button"
+                  onClick={removeVideo}
+                  aria-label="Remove video"
+                  className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/60 text-xs leading-none text-white hover:bg-black/80"
+                >
+                  <X className="h-3.5 w-3.5" aria-hidden="true" />
+                </button>
+              </div>
+            ) : (
+              <label
+                className={`flex h-24 w-full cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-line-strong text-sm text-zinc-500 dark:text-zinc-400 ${
+                  checkingVideo ? "pointer-events-none opacity-50" : "hover:border-primary"
+                }`}
+              >
+                {checkingVideo ? "Checking video…" : "Add video"}
+                <input
+                  id="video_input"
+                  ref={videoInputRef}
+                  type="file"
+                  accept={VIDEO_ACCEPT_ATTR}
+                  disabled={checkingVideo}
+                  onChange={(e) => handleVideoSelected(e.target.files, videoInputRef)}
+                  className="hidden"
+                />
+              </label>
             )}
           </div>
+
+          {uploading && (
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              {photos.some((p) => p.kind === "new") && video?.kind === "new"
+                ? "Uploading photos and video…"
+                : video?.kind === "new"
+                  ? "Uploading video…"
+                  : "Uploading photos…"}
+            </p>
+          )}
 
           {state.status === "error" && <p className="text-sm text-danger">{state.message}</p>}
 

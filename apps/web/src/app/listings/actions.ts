@@ -83,6 +83,80 @@ function extensionFor(file: File): string {
 }
 
 /**
+ * Pulls a single real uploaded file (if any) out of a FormData field —
+ * singular counterpart to realFilesFrom above, for the at-most-one
+ * `new_video` field (spec docs/design/video-upload-spec.md §4).
+ */
+function realFileFrom(formData: FormData, field: string): File | null {
+  const value = formData.get(field);
+  return value instanceof File && value.size > 0 ? value : null;
+}
+
+function videoExtensionFor(file: File): string {
+  const fromName = file.name.includes(".") ? file.name.slice(file.name.lastIndexOf(".")) : "";
+  if (fromName) return fromName.toLowerCase();
+  if (file.type === "video/quicktime") return ".mov";
+  return ".mp4";
+}
+
+/**
+ * Uploads a newly-staged video to the `listing-videos` bucket and inserts
+ * its `listing_videos` row (spec §4 "Submit behavior"). Mirrors
+ * uploadNewPhotos' shape, adapted for a single optional file instead of a
+ * list. Caller is responsible for removing any prior video row/object first
+ * (see removeExistingVideo) since `listing_videos` enforces at most one row
+ * per listing.
+ */
+async function uploadVideo(
+  supabase: SupabaseClient,
+  ownerId: string,
+  listingId: string,
+  file: File,
+): Promise<{ failed: boolean }> {
+  const path = `${ownerId}/${listingId}/${crypto.randomUUID()}${videoExtensionFor(file)}`;
+  const { error: uploadError } = await supabase.storage
+    .from("listing-videos")
+    .upload(path, file, { contentType: file.type || "application/octet-stream" });
+
+  if (uploadError) {
+    console.error("listing video upload failed", uploadError);
+    return { failed: true };
+  }
+
+  const { error: rowError } = await supabase
+    .from("listing_videos")
+    .insert({ listing_id: listingId, storage_path: path });
+
+  if (rowError) {
+    console.error("listing_videos insert failed", rowError);
+    // Clean up the now-orphaned storage object rather than leaving a file
+    // with no DB row pointing at it (same pattern as uploadNewPhotos).
+    await supabase.storage.from("listing-videos").remove([path]);
+    return { failed: true };
+  }
+
+  return { failed: false };
+}
+
+/**
+ * Deletes a listing's existing `listing_videos` row + Storage object, if
+ * any. Used both for explicit removal (`remove_video` flag) and as the
+ * "replace" step before uploading a new video over an existing one.
+ */
+async function removeExistingVideo(supabase: SupabaseClient, listingId: string): Promise<void> {
+  const { data: existing } = await supabase
+    .from("listing_videos")
+    .select("id, storage_path")
+    .eq("listing_id", listingId)
+    .maybeSingle();
+
+  if (!existing) return;
+
+  await supabase.storage.from("listing-videos").remove([existing.storage_path]);
+  await supabase.from("listing_videos").delete().eq("id", existing.id);
+}
+
+/**
  * Uploads any newly-added photo files to the `listing-images` bucket and
  * inserts their `listing_images` rows (spec §4 "on form submit"). Runs
  * sequentially, not in parallel, per spec §4's note that this is acceptable
@@ -158,6 +232,7 @@ export async function createListing(formData: FormData): Promise<ListingActionSt
 
   let listingId: string;
   let photosFailed: boolean;
+  let videoFailed: boolean;
   try {
     const {
       data: { user },
@@ -196,16 +271,27 @@ export async function createListing(formData: FormData): Promise<ListingActionSt
     const { failedCount } = await uploadNewPhotos(supabase, user.id, listing.id, newPhotos, 0);
     listingId = listing.id;
     photosFailed = failedCount > 0;
+
+    // Video upload (spec docs/design/video-upload-spec.md §4): at most one
+    // file, optional. A brand-new listing never has an existing video to
+    // replace, so there's nothing to remove first.
+    const newVideo = realFileFrom(formData, "new_video");
+    videoFailed = false;
+    if (newVideo) {
+      const { failed } = await uploadVideo(supabase, user.id, listing.id, newVideo);
+      videoFailed = failed;
+    }
   } catch (err) {
     console.error("createListing: unexpected error", err);
     return { status: "error", message: "Could not publish your listing. Please try again." };
   }
 
-  if (photosFailed) {
-    redirect(`/listings/${listingId}?photoError=1`);
-  }
+  const failureParams = new URLSearchParams();
+  if (photosFailed) failureParams.set("photoError", "1");
+  if (videoFailed) failureParams.set("videoError", "1");
+  const query = failureParams.toString();
 
-  redirect(`/listings/${listingId}`);
+  redirect(`/listings/${listingId}${query ? `?${query}` : ""}`);
 }
 
 /**
@@ -224,6 +310,7 @@ export async function updateListing(
   const supabase = await createClient();
 
   let photosFailed: boolean;
+  let videoFailed: boolean;
   try {
     const {
       data: { user },
@@ -321,16 +408,33 @@ export async function updateListing(
       keptImageIds.length,
     );
     photosFailed = failedCount > 0;
+
+    // Video (spec docs/design/video-upload-spec.md §4): a new file replaces
+    // any existing video (remove-then-upload, since listing_videos allows at
+    // most one row per listing); `remove_video` without a new file just
+    // removes the existing one; neither field present leaves the existing
+    // video (if any) untouched.
+    const newVideo = realFileFrom(formData, "new_video");
+    const removeVideoFlag = formData.get("remove_video") === "1";
+    videoFailed = false;
+    if (newVideo) {
+      await removeExistingVideo(supabase, listingId);
+      const { failed } = await uploadVideo(supabase, user.id, listingId, newVideo);
+      videoFailed = failed;
+    } else if (removeVideoFlag) {
+      await removeExistingVideo(supabase, listingId);
+    }
   } catch (err) {
     console.error("updateListing: unexpected error", err);
     return { status: "error", message: "Could not save changes. Please try again." };
   }
 
-  if (photosFailed) {
-    redirect(`/listings/${listingId}?photoError=1`);
-  }
+  const failureParams = new URLSearchParams();
+  if (photosFailed) failureParams.set("photoError", "1");
+  if (videoFailed) failureParams.set("videoError", "1");
+  const query = failureParams.toString();
 
-  redirect(`/listings/${listingId}`);
+  redirect(`/listings/${listingId}${query ? `?${query}` : ""}`);
 }
 
 /**
@@ -370,11 +474,21 @@ export async function deleteListing(listingId: string): Promise<ListingActionSta
       .select("storage_path")
       .eq("listing_id", listingId);
 
+    const { data: video } = await supabase
+      .from("listing_videos")
+      .select("storage_path")
+      .eq("listing_id", listingId)
+      .maybeSingle();
+
     const { error } = await supabase.from("listings").delete().eq("id", listingId);
 
     if (error) {
       console.error(error);
       return { status: "error", message: "Could not delete this listing. Please try again." };
+    }
+
+    if (video) {
+      await supabase.storage.from("listing-videos").remove([video.storage_path]);
     }
 
     if (images && images.length > 0) {
