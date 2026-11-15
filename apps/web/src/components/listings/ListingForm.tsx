@@ -208,10 +208,12 @@ export default function ListingForm({
     // Fields-only payload (spec §8 addendum): no file bytes travel through
     // this FormData/Server Action call anymore. Photos/video live in React
     // state and are uploaded separately, straight from the browser to
-    // Supabase Storage, only after the fields below have been saved.
+    // Supabase Storage, only after the fields below have been saved. Note
+    // this is already true of `new FormData(formRef.current)` itself: the
+    // photo/video `<input type="file">` elements below are deliberately left
+    // without a `name` attribute, so the browser never serializes them into
+    // FormData in the first place — there's nothing to strip here.
     const formData = new FormData(formRef.current);
-    formData.delete("photos_input");
-    formData.delete("video_input");
 
     // M14 fix: the action call itself can throw — not just resolve with an
     // `{ status: "error" }` object — if the request never reaches the Next.js

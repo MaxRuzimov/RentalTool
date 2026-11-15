@@ -20,6 +20,19 @@
 -- codebase already uses for the `listing_category` enum vs.
 -- apps/web/src/lib/listings/categories.ts (see 00000000000002_listings.sql).
 
+-- Known, accepted MVP tradeoff: this is a classic count-then-insert race.
+-- Two near-simultaneous inserts for the same listing_id can both run their
+-- `select count(*)` before either commits, so both see e.g. count = 5 and
+-- both pass the `>= 6` check, letting that listing end up with 7 rows. This
+-- isn't closed with a `select ... for update` lock on the parent `listings`
+-- row (which would serialize concurrent inserters and fix it), because the
+-- normal UI flow is a single session uploading photos sequentially (see
+-- uploadNewPhotos in apps/web/src/lib/listings/clientUpload.ts) — two
+-- concurrent inserts for the same listing only happen if the same user (or
+-- someone with access to their session) deliberately fires parallel direct
+-- API calls, which is out of scope to harden against for MVP. Revisit if
+-- multi-device/multi-tab concurrent editing of the same listing becomes a
+-- real use case.
 create function public.enforce_max_listing_images()
 returns trigger
 language plpgsql
