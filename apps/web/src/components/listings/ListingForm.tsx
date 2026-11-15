@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent, type RefObject } from "react";
 import { X } from "lucide-react";
 import Spinner from "@/components/ui/Spinner";
 import { LISTING_CATEGORIES, PRICE_UNITS } from "@/lib/listings/categories";
@@ -61,6 +61,7 @@ export default function ListingForm({
 }) {
   const formRef = useRef<HTMLFormElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
 
   const values = initial ?? DEFAULT_VALUES;
 
@@ -74,7 +75,10 @@ export default function ListingForm({
 
   const atCap = photos.length >= MAX_IMAGES;
 
-  function handleFilesSelected(fileList: FileList | null) {
+  function handleFilesSelected(
+    fileList: FileList | null,
+    inputRef: RefObject<HTMLInputElement | null>,
+  ) {
     if (!fileList || fileList.length === 0) return;
 
     const notes: string[] = [];
@@ -106,7 +110,7 @@ export default function ListingForm({
     setPhotos((prev) => [...prev, ...accepted]);
     setPhotoNote(notes.length > 0 ? notes.join(" ") : null);
 
-    if (fileInputRef.current) fileInputRef.current.value = "";
+    if (inputRef.current) inputRef.current.value = "";
   }
 
   function removePhoto(key: string) {
@@ -303,23 +307,43 @@ export default function ListingForm({
               Listings with at least one photo get far more interest — add one if you can.
             </p>
 
-            <label
-              className={`flex h-24 cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-line-strong text-sm text-zinc-500 dark:text-zinc-400 ${
-                atCap ? "pointer-events-none opacity-50" : "hover:border-primary"
-              }`}
-            >
-              {atCap ? "Maximum 6 photos." : "Add photos"}
-              <input
-                id="photos_input"
-                ref={fileInputRef}
-                type="file"
-                multiple
-                accept={ACCEPT_ATTR}
-                disabled={atCap}
-                onChange={(e) => handleFilesSelected(e.target.files)}
-                className="hidden"
-              />
-            </label>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <label
+                className={`flex h-24 flex-1 cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-line-strong text-sm text-zinc-500 dark:text-zinc-400 ${
+                  atCap ? "pointer-events-none opacity-50" : "hover:border-primary"
+                }`}
+              >
+                {atCap ? "Maximum 6 photos." : "Take photo"}
+                <input
+                  id="camera_input"
+                  ref={cameraInputRef}
+                  type="file"
+                  accept={ACCEPT_ATTR}
+                  capture="environment"
+                  disabled={atCap}
+                  onChange={(e) => handleFilesSelected(e.target.files, cameraInputRef)}
+                  className="hidden"
+                />
+              </label>
+
+              <label
+                className={`flex h-24 flex-1 cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-line-strong text-sm text-zinc-500 dark:text-zinc-400 ${
+                  atCap ? "pointer-events-none opacity-50" : "hover:border-primary"
+                }`}
+              >
+                {atCap ? "Maximum 6 photos." : "Choose from gallery"}
+                <input
+                  id="photos_input"
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  accept={ACCEPT_ATTR}
+                  disabled={atCap}
+                  onChange={(e) => handleFilesSelected(e.target.files, fileInputRef)}
+                  className="hidden"
+                />
+              </label>
+            </div>
 
             {photoNote && <p className="text-xs text-danger">{photoNote}</p>}
 
