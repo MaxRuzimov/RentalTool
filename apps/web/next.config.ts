@@ -3,26 +3,29 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   experimental: {
     serverActions: {
-      // Default Server Actions body limit is 1MB. ListingForm submits photos
-      // and video together in a single Server Action call, so the worst case
-      // is the combined max, not just the video alone: up to MAX_IMAGES (6)
-      // photos at MAX_FILE_SIZE_BYTES (5MB) each = 30MB, plus one video at
-      // MAX_VIDEO_FILE_SIZE_BYTES (75MB), for a 105MB payload. 120MB gives
-      // ~15MB of headroom for multipart/form-data boundaries and headers.
-      bodySizeLimit: "120mb",
+      // M16 §8 addendum: listing photos/video no longer travel through this
+      // Server Action as file bytes — ListingForm uploads them client-direct
+      // to Supabase Storage instead (see @/lib/listings/clientUpload), both
+      // because Vercel enforces its own hard, non-configurable 4.5MB request
+      // body limit on every Function regardless of this setting, and because
+      // once uploads moved client-side there's no longer any reason to carry
+      // a large-upload-sized cap here. createListing/updateListing now only
+      // ever receive ordinary text/number form fields (title, description,
+      // category, price, location), so 2MB is already generous headroom over
+      // a real-world submission (the 2000-character description cap alone is
+      // under 4KB) — comfortably under Vercel's 4.5MB ceiling with plenty of
+      // margin for multipart/form-data boundaries and headers.
+      bodySizeLimit: "2mb",
     },
-    // IMPORTANT: this is a SEPARATE cap from serverActions.bodySizeLimit above,
-    // and both must be raised together or large uploads fail even though only
-    // one limit looks "fixed". Next's proxy layer (apps/web/src/proxy.ts, our
-    // Supabase session-refresh proxy, matched on /listings/new and
-    // /listings/[id]/edit among other routes) clones/buffers the incoming
-    // request body independently of the Server Action body limit, and defaults
-    // to capping that buffered clone at 10MB. If a request exceeds it, the
-    // proxy only buffers the first 10MB and callers see
-    // "Request body exceeded 10MB ... Unexpected end of form" even when
-    // serverActions.bodySizeLimit is already large enough. Set this to match
-    // serverActions.bodySizeLimit so neither cap is the bottleneck.
-    proxyClientMaxBodySize: "120mb",
+    // Separate cap from serverActions.bodySizeLimit above — Next's proxy
+    // layer (apps/web/src/proxy.ts, our Supabase session-refresh proxy)
+    // clones/buffers the incoming request body independently and defaults to
+    // capping that buffered clone at 10MB, which is already comfortably
+    // above the 2MB fields-only payload this app now sends, so no override
+    // is needed here at all. Kept explicit (matching the value above) so a
+    // future reader doesn't have to go hunting for Next's default and can
+    // see both caps are intentionally modest for the same reason.
+    proxyClientMaxBodySize: "2mb",
   },
 };
 

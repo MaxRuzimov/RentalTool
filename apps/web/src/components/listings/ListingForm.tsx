@@ -1,8 +1,10 @@
 "use client";
 
 import { useRef, useState, type FormEvent, type RefObject } from "react";
+import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
 import Spinner from "@/components/ui/Spinner";
+import { createClient } from "@/lib/supabase/client";
 import { LISTING_CATEGORIES, PRICE_UNITS } from "@/lib/listings/categories";
 import {
   ACCEPT_ATTR,
@@ -23,6 +25,7 @@ import {
   deleteListing,
   type ListingActionState,
 } from "@/app/listings/actions";
+import { syncListingMedia, type VideoSyncInstruction } from "@/lib/listings/clientUpload";
 import { isRedirectError } from "@/lib/forms/isRedirectError";
 
 export type ListingFormInitialValues = {
@@ -73,6 +76,7 @@ export default function ListingForm({
   initialImages?: ListingFormInitialImage[];
   initialVideo?: ListingFormInitialVideo;
 }) {
+  const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -200,35 +204,14 @@ export default function ListingForm({
 
     setState({ status: "idle" });
     setSubmitting(true);
-    const hasNewPhotos = photos.some((p) => p.kind === "new");
-    const hasNewVideo = video?.kind === "new";
-    setUploading(hasNewPhotos || hasNewVideo);
 
+    // Fields-only payload (spec §8 addendum): no file bytes travel through
+    // this FormData/Server Action call anymore. Photos/video live in React
+    // state and are uploaded separately, straight from the browser to
+    // Supabase Storage, only after the fields below have been saved.
     const formData = new FormData(formRef.current);
-    // Text/select/number fields are already captured by `new FormData(form)`
-    // above via their `name` attributes; photos are appended manually since
-    // they live in React state (add/remove), not directly bound to the
-    // native file input's value (see §4 of the spec for the UX this drives).
     formData.delete("photos_input");
-    for (const photo of photos) {
-      if (photo.kind === "existing") {
-        formData.append("kept_image_id", photo.id);
-      } else {
-        formData.append("new_photos", photo.file, photo.file.name);
-      }
-    }
-
-    // Same staged-upload pattern as photos, adapted for a single optional
-    // video (spec §4 "Submit behavior"): a newly-staged file is appended for
-    // upload; an existing video that was removed client-side (and not
-    // replaced by a new one) is flagged for deletion; an untouched existing
-    // video needs no field at all (the server leaves it alone).
     formData.delete("video_input");
-    if (video?.kind === "new") {
-      formData.append("new_video", video.file, video.file.name);
-    } else if (!video && initialVideoId) {
-      formData.append("remove_video", "1");
-    }
 
     // M14 fix: the action call itself can throw — not just resolve with an
     // `{ status: "error" }` object — if the request never reaches the Next.js
@@ -243,20 +226,70 @@ export default function ListingForm({
           ? await createListing(formData)
           : await updateListing(listingId as string, formData);
 
-      // A successful create/update redirects server-side and never returns
-      // a value here (redirect() throws internally, and is NOT caught below
-      // — see the catch block's comment) — only error states reach this
-      // line.
-      setState(result);
-    } catch (err) {
-      // redirect() (a successful submit) works by throwing a Next.js
-      // control-flow error with a `NEXT_REDIRECT` digest, which must be
-      // allowed to propagate so the navigation actually happens — only a
-      // genuine failure (anything else) should be swallowed and surfaced as
-      // an inline error.
-      if (isRedirectError(err)) {
-        throw err;
+      if (result.status === "error") {
+        setState(result);
+        return;
       }
+      if (result.status !== "success") {
+        // createListing/updateListing never actually resolve "idle" — this
+        // is just here so TypeScript's narrowing below is sound.
+        return;
+      }
+
+      const savedListingId = result.listingId;
+      const newPhotoFiles = photos.filter((p) => p.kind === "new").map((p) => p.file);
+      const keptImageIds = photos.filter((p) => p.kind === "existing").map((p) => p.id);
+      const videoInstruction: VideoSyncInstruction =
+        video?.kind === "new"
+          ? { kind: "new", file: video.file }
+          : !video && initialVideoId
+            ? { kind: "remove" }
+            : { kind: "none" };
+
+      setUploading(newPhotoFiles.length > 0 || videoInstruction.kind === "new");
+
+      let photosFailed = false;
+      let videoFailed = false;
+
+      try {
+        const supabase = createClient();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+
+        if (!user) {
+          // Session disappeared between the server action succeeding and
+          // now — extremely unlikely, but the listing's fields are already
+          // saved, so surface this the same way a media-upload failure is
+          // surfaced rather than silently losing the save.
+          photosFailed = newPhotoFiles.length > 0;
+          videoFailed = videoInstruction.kind === "new";
+        } else {
+          const syncResult = await syncListingMedia(supabase, {
+            ownerId: user.id,
+            listingId: savedListingId,
+            keptImageIds,
+            newPhotoFiles,
+            video: videoInstruction,
+          });
+          photosFailed = syncResult.photosFailed;
+          videoFailed = syncResult.videoFailed;
+        }
+      } catch (err) {
+        console.error("ListingForm media sync failed", err);
+        photosFailed = photosFailed || newPhotoFiles.length > 0;
+        videoFailed = videoFailed || videoInstruction.kind === "new";
+      } finally {
+        setUploading(false);
+      }
+
+      const failureParams = new URLSearchParams();
+      if (photosFailed) failureParams.set("photoError", "1");
+      if (videoFailed) failureParams.set("videoError", "1");
+      const query = failureParams.toString();
+
+      router.push(`/listings/${savedListingId}${query ? `?${query}` : ""}`);
+    } catch (err) {
       console.error("ListingForm submit failed", err);
       setState({
         status: "error",
