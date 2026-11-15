@@ -113,6 +113,28 @@ Simplest possible rule, no separate "set as cover" picker: **the image in `posit
 - On form submit: newly added files are uploaded to Storage under `{owner_id}/{listing_id}/{uuid-filename}` and a `listing_images` row inserted per file (in current display order → `position` 0..n); files marked for removal are deleted from Storage and their rows deleted. All of this happens inside the same submit action as the rest of the listing fields (single "Save"/"Publish" button — no separate "upload photos" step).
 - Uploading indicator: while files are being read/uploaded, show "Uploading photos…" near the grid and disable the submit button (in addition to the normal "Saving…" state) — for MVP it's acceptable for photo upload and row save to be sequential within one server action rather than optimized/parallelized.
 
+### 4.1 Addendum (post-launch fix): explicit "Take photo" control alongside "Add photos"
+
+Status: ready for implementation. Trigger: stakeholder feedback relayed by PM — on mobile, selecting the existing single "Add photos" control did not reliably offer a camera option; only gallery selection was available in practice.
+
+**Decision:** add a second, explicit upload control — **"Take photo"** — placed side by side with the existing gallery control, same dashed-box visual style, equal visual weight (e.g. two equal-width boxes sharing a row, stacking to full-width on very narrow screens if needed). Suggested relative order: "Take photo" first (left/top), "Add photos" (renamed from gallery) second (right/bottom) — matches the common "Take Photo" / "Choose from Library" ordering convention in most consumer apps, but exact left-right order is a minor detail an engineer can swap without re-reviewing this spec.
+
+Both controls sit in the same place the single "Add photos" control used to occupy: above the photo preview grid, below the "Listings with at least one photo…" helper text.
+
+**"Take photo" control:**
+- A separate `<input type="file" accept="image/jpeg,image/png,image/webp" capture="environment">`, **no** `multiple` attribute (camera capture is inherently one shot at a time; unlike the gallery picker, there is no multi-select camera flow to support).
+- Wired to the exact same `handleFilesSelected` validation/staging logic already used by the gallery input (same size/type checks, same cap enforcement, same append-to-preview-grid behavior) — this is a second entry point into the same staging pipeline, not a new code path.
+- Same disabled-at-cap behavior as the gallery control: once 6 photos are staged, both controls disable together (not just one), since the underlying cap is shared.
+
+**Copy:**
+- New control: **"Take photo"**.
+- Existing control: rename from "Add photos" to **"Choose from gallery"** for clearer contrast against the new button (exact wording is a copy detail; "Choose from gallery" is this spec's suggestion, an engineer may adjust slightly, e.g. "From gallery", as long as it reads as distinct from "Take photo").
+- Cap message ("Maximum 6 photos.") applies to whichever control(s) are visible/disabled at the time — no change to that copy.
+
+**Rationale:** relying solely on a bare `<input type="file" accept="image/*">` to implicitly surface a camera option in the OS action sheet is inconsistent across mobile browsers — some show a camera entry in the sheet, some don't, depending on OS/browser/version. An explicit, separate "Take photo" affordance — the standard pattern in most consumer apps, which distinguish "Take Photo" from "Choose from Library" as two distinct buttons rather than one ambiguous picker — is more reliable (guarantees a camera launch via the `capture` attribute) and more discoverable (the user doesn't have to guess that camera is even an option) than hoping the implicit single-input sheet includes it.
+
+No data model or validation-rule changes — this is a pure UI/entry-point addition on top of §4's existing upload pipeline.
+
 ## 5. Screens (detailed)
 
 ### 5.1 Create listing — `/listings/new` (auth required)
@@ -246,6 +268,7 @@ Simplest possible rule, no separate "set as cover" picker: **the image in `posit
 - Public index empty state (logged out): "Be the first to list a tool!" → `/signup`
 - Detail page owner convenience link: "Edit listing"
 - Not-found message: "Listing not found"
+- Photo upload controls (added in §4.1 addendum): "Take photo" / "Choose from gallery"
 
 ## 9. Styling notes
 

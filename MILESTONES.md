@@ -21,6 +21,7 @@ Status qiymatlari: Not started / In progress / In review / Done
 | M13 | Visual craft pass — loading/empty states, micro-interactions, iconography, image placeholders, feedback consistency (on top of M12's tokens + M7's responsiveness, not a redo) | Done |
 | M14 | Functionality robustness pass — error-handling audit across server actions, form-validation completeness, double-submit prevention, closing out deferred QA findings (e.g. M6's "Cancel request on an already-completed booking" note) | Done |
 | M15 | Availability blocking — surface already-approved-booking dates as blocked/unavailable on the "Request to rent" date picker, instead of only rejecting overlaps server-side after submit | Done |
+| M16 | Media upload improvements — (1) camera-capture option on the web listing photo upload (mobile browsers previously only offered "choose from gallery/files", no "take a photo" affordance); (2) new video-upload feature for listings (1 video/listing, separate `listing_videos` table + `listing-videos` Storage bucket, distinct caps from photos) — prompted by Max's real-usage feedback ("Video yuklay olmadim" / wanted a camera option, not just gallery upload) | In progress |
 
 ## Qoida
 Har bir milestone tugagach:
