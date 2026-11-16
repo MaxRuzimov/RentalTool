@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Wrench } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { logout } from "@/lib/auth/actions";
 import LogoutButton from "./LogoutButton";
@@ -37,11 +38,14 @@ export default async function Header() {
   }
 
   return (
-    <header className="flex flex-wrap items-center justify-between gap-y-2 border-b border-line px-4 py-4 sm:px-6">
+    <header className="sticky top-0 z-10 flex flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-line bg-background/70 px-4 py-4 backdrop-blur-md sm:px-6">
       <Link
         href="/"
-        className="rounded-sm text-base font-semibold text-accent transition-colors hover:text-accent-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+        className="flex items-center gap-2 rounded-sm text-base font-semibold text-accent transition-colors hover:text-accent-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
       >
+        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
+          <Wrench className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
+        </span>
         RentalTool
       </Link>
 

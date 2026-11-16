@@ -1,0 +1,300 @@
+<title>Homepage Hero Concepts</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+  :root {
+    /* RentalTool design-system.md tokens, light */
+    --bg: #fafafa;
+    --fg: #18181b;
+    --panel: #ffffff;
+    --muted: #52525b;
+    --line: rgb(0 0 0 / 8%);
+    --primary: #c2410c;
+    --accent: #1e3a5f;
+
+    /* app mockup tokens (dark, matching Max's screenshot) */
+    --app-bg: #09090b;
+    --app-surface: #161616;
+    --app-fg: #f4f4f5;
+    --app-muted: #a1a1aa;
+    --app-line: rgb(255 255 255 / 14.5%);
+    --app-primary: #f97316;
+    --app-accent: #93b4d6;
+
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #09090b;
+      --fg: #f4f4f5;
+      --panel: #161616;
+      --muted: #a1a1aa;
+      --line: rgb(255 255 255 / 14.5%);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #09090b;
+    --fg: #f4f4f5;
+    --panel: #161616;
+    --muted: #a1a1aa;
+    --line: rgb(255 255 255 / 14.5%);
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+  .wrap {
+    max-width: 480px;
+    margin: 0 auto;
+    padding-block: 28px 48px;
+  }
+  h1 {
+    font-size: 1.35rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin: 0 0 6px;
+  }
+  .lede {
+    font-size: 0.9rem;
+    color: var(--muted);
+    line-height: 1.5;
+    margin: 0 0 20px;
+  }
+  .tabs {
+    display: flex;
+    gap: 6px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 4px;
+    margin-bottom: 18px;
+  }
+  .tab {
+    flex: 1;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    font: inherit;
+    font-size: 0.82rem;
+    font-weight: 600;
+    padding: 9px 0;
+    border-radius: 999px;
+    cursor: pointer;
+  }
+  .tab[aria-selected="true"] {
+    background: var(--primary);
+    color: #fff;
+  }
+
+  .concept { display: none; }
+  .concept.active { display: block; }
+
+  .label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--primary);
+    margin: 0 0 4px;
+  }
+  .title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    margin: 0 0 6px;
+  }
+  .desc {
+    font-size: 0.85rem;
+    color: var(--muted);
+    line-height: 1.55;
+    margin: 0 0 16px;
+  }
+
+  /* --- phone frame around the app mockup --- */
+  .frame {
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    overflow: hidden;
+    background: var(--app-bg);
+  }
+  .appnav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--app-line);
+    font-size: 0.72rem;
+    color: var(--app-muted);
+  }
+  .appnav b { color: var(--app-accent); font-size: 0.8rem; }
+  .applogout {
+    border: 1px solid var(--app-line);
+    border-radius: 999px;
+    padding: 4px 10px;
+    color: var(--app-fg);
+    font-size: 0.68rem;
+  }
+
+  .hero { position: relative; color: var(--app-fg); }
+  .btnrow { display: flex; flex-direction: column; gap: 10px; margin-top: 18px; }
+  .btn {
+    display: flex; align-items: center; justify-content: center;
+    height: 42px; border-radius: 999px; font-size: 0.85rem; font-weight: 600;
+    text-decoration: none;
+  }
+  .btn.primary { background: var(--app-primary); color: #171717; }
+  .btn.outline { border: 1px solid var(--app-line); color: var(--app-fg); }
+  .btn.link { color: var(--app-accent); height: auto; text-decoration: underline; text-underline-offset: 2px; }
+
+  /* Concept A — Editorial */
+  .heroA { padding: 36px 20px 40px; text-align: left; }
+  .eyebrow {
+    font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.08em; color: var(--app-accent); margin: 0 0 14px;
+    border-top: 1px solid var(--app-line); padding-top: 12px;
+  }
+  .heroA h2 {
+    font-size: 1.9rem; line-height: 1.12; font-weight: 800; letter-spacing: -0.02em;
+    margin: 0 0 12px;
+  }
+  .heroA h2 .orange { color: var(--app-primary); }
+  .heroA p { font-size: 0.88rem; color: var(--app-muted); line-height: 1.55; margin: 0; max-width: 32ch; }
+  .heroA .btnrow { flex-direction: row; flex-wrap: wrap; }
+  .heroA .btn.primary { flex: 1; min-width: 120px; }
+
+  /* Concept B — Gradient depth */
+  .heroB {
+    padding: 40px 18px;
+    text-align: center;
+    position: relative;
+    isolation: isolate;
+  }
+  .heroB::before, .heroB::after {
+    content: ""; position: absolute; border-radius: 50%; filter: blur(50px); z-index: -1;
+  }
+  .heroB::before { width: 220px; height: 220px; background: var(--app-primary); opacity: 0.18; top: -40px; left: -50px; }
+  .heroB::after { width: 200px; height: 200px; background: var(--app-accent); opacity: 0.15; bottom: -30px; right: -40px; }
+  .card {
+    border: 1px solid var(--app-line); border-radius: 24px;
+    background: rgb(255 255 255 / 4%); backdrop-filter: blur(6px);
+    padding: 28px 20px;
+  }
+  .heroB h2 { font-size: 1.5rem; font-weight: 800; letter-spacing: -0.015em; margin: 0 0 10px; }
+  .heroB p { font-size: 0.86rem; color: var(--app-muted); line-height: 1.55; margin: 0 auto; max-width: 30ch; }
+  .heroB .btnrow { align-items: center; }
+  .heroB .btn { width: 100%; max-width: 220px; margin: 0 auto; }
+
+  /* Concept C — Split panel */
+  .heroC { padding: 32px 18px 36px; }
+  .visual {
+    border-radius: 20px; border: 1px solid var(--app-line);
+    background: linear-gradient(135deg, #1e3a5f 0%, rgb(194 65 12 / 35%) 100%);
+    min-height: 160px; position: relative; margin-bottom: 20px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .visual svg { width: 56px; height: 56px; opacity: 0.85; }
+  .chip {
+    position: absolute; background: var(--app-surface); border: 1px solid var(--app-line);
+    border-radius: 999px; padding: 5px 10px; font-size: 0.62rem; font-weight: 600; color: var(--app-fg);
+  }
+  .chip.c1 { top: 10px; left: 10px; }
+  .chip.c2 { bottom: 10px; right: 10px; }
+  .heroC h2 { font-size: 1.6rem; font-weight: 800; letter-spacing: -0.015em; margin: 0 0 10px; line-height: 1.15; }
+  .heroC p { font-size: 0.86rem; color: var(--app-muted); line-height: 1.55; margin: 0 0 18px; }
+  .heroC .btnrow { flex-direction: row; }
+
+  .note {
+    margin-top: 14px; font-size: 0.78rem; color: var(--muted); line-height: 1.5;
+  }
+</style>
+
+<div class="wrap">
+  <h1>Homepage hero — 3 options</h1>
+  <p class="lede">Same colors and buttons you already have — just a different look for the main page when you're logged in. Tap a tab to preview, then tell me which one (A, B, or C) in chat.</p>
+
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" aria-selected="true" data-target="A">A · Bold type</button>
+    <button class="tab" role="tab" aria-selected="false" data-target="B">B · Soft glow</button>
+    <button class="tab" role="tab" aria-selected="false" data-target="C">C · Showcase card</button>
+  </div>
+
+  <section class="concept active" id="concept-A">
+    <p class="label">Concept A</p>
+    <p class="title">Bold type</p>
+    <p class="desc">Clean and confident — big headline does the work, no icon or imagery. Minimal and fast-loading.</p>
+    <div class="frame">
+      <div class="appnav"><b>RentalTool</b><span class="applogout">Log out</span></div>
+      <div class="hero heroA">
+        <p class="eyebrow">GTA · Peer-to-peer tool rental</p>
+        <h2>Rent the tool you need,<br><span class="orange">from someone nearby.</span></h2>
+        <p>Browse tools listed by people in the GTA, or list your own gear to earn a little extra.</p>
+        <div class="btnrow">
+          <a class="btn primary">List a tool</a>
+          <a class="btn link">Browse listings →</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="concept" id="concept-B">
+    <p class="label">Concept B</p>
+    <p class="title">Soft glow</p>
+    <p class="desc">Same layout as today, but with soft orange/navy light glowing behind a floating card instead of the flat wrench icon. Modern and a bit more premium.</p>
+    <div class="frame">
+      <div class="appnav"><b>RentalTool</b><span class="applogout">Log out</span></div>
+      <div class="hero heroB">
+        <div class="card">
+          <h2>Rent the tool you need, from someone nearby.</h2>
+          <p>Browse tools listed by people in the GTA, or list your own gear to earn a little extra.</p>
+          <div class="btnrow">
+            <a class="btn primary">List a tool</a>
+            <a class="btn outline">Browse listings</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="concept" id="concept-C">
+    <p class="label">Concept C</p>
+    <p class="title">Showcase card</p>
+    <p class="desc">A visual "app" card up top (like a product screenshot) with small highlight badges, text and buttons below. Feels the most like a polished SaaS product.</p>
+    <div class="frame">
+      <div class="appnav"><b>RentalTool</b><span class="applogout">Log out</span></div>
+      <div class="hero heroC">
+        <div class="visual">
+          <span class="chip c1">500+ tools nearby</span>
+          <span class="chip c2">★ 4.8 avg rating</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.1-3.1a5 5 0 0 1-6.4 6.4L5.4 21.6a2 2 0 0 1-2.8-2.8L11.6 9a5 5 0 0 1 6.4-6.4l-3.1 3.1z"/></svg>
+        </div>
+        <h2>Rent the tool you need, from someone nearby.</h2>
+        <p>Browse tools listed by people in the GTA, or list your own gear to earn a little extra.</p>
+        <div class="btnrow">
+          <a class="btn primary">List a tool</a>
+          <a class="btn outline">Browse listings</a>
+        </div>
+      </div>
+    </div>
+    <p class="note">Note: "500+ tools" and the rating are placeholder numbers for this mockup only — real launch copy would use actual figures or drop the badges.</p>
+  </section>
+</div>
+
+<script>
+  (function () {
+    var tabs = document.querySelectorAll(".tab");
+    var sections = document.querySelectorAll(".concept");
+    tabs.forEach(function (tab) {
+      tab.addEventListener("click", function () {
+        tabs.forEach(function (t) { t.setAttribute("aria-selected", "false"); });
+        tab.setAttribute("aria-selected", "true");
+        var target = tab.getAttribute("data-target");
+        sections.forEach(function (s) {
+          s.classList.toggle("active", s.id === "concept-" + target);
+        });
+      });
+    });
+  })();
+</script>

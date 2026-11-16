@@ -17,7 +17,15 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`${inter.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col font-sans">
+      <body className="relative min-h-full flex flex-col overflow-x-hidden font-sans">
+        <div
+          className="pointer-events-none fixed -top-32 -left-32 h-[480px] w-[480px] rounded-full bg-primary/10 blur-[100px]"
+          aria-hidden="true"
+        />
+        <div
+          className="pointer-events-none fixed -right-24 -bottom-24 h-[420px] w-[420px] rounded-full bg-accent/10 blur-[100px]"
+          aria-hidden="true"
+        />
         <Header />
         {children}
         <Footer />
