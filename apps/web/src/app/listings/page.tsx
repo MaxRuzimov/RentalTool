@@ -4,6 +4,8 @@ import { createClient } from "@/lib/supabase/server";
 import { signImageUrls } from "@/lib/listings/storage";
 import ListingCard from "@/components/listings/ListingCard";
 import type { ListingCardData } from "@/components/listings/ListingCard";
+import ListingsMapViewLoader from "@/components/listings/ListingsMapViewLoader";
+import type { ListingMapPin } from "@/components/listings/ListingsMapView";
 import EmptyState from "@/components/ui/EmptyState";
 import {
   LISTING_CATEGORIES,
@@ -22,7 +24,32 @@ type SearchParams = {
   price_min?: string;
   price_max?: string;
   price_unit?: string;
+  view?: string;
 };
+
+// Preserves every currently-active filter when switching views — the
+// toggle is a plain link, not a form, so it must carry the current filter
+// state itself rather than relying on a submit. Uses the raw `params`
+// strings (not the already-narrowed/validated `category`/`trimmedLocation`
+// etc.) because this is pure passthrough of whatever is already in the
+// URL, not a second validation pass — if an invalid value were somehow in
+// the URL already, round-tripping it unchanged is harmless and matches how
+// every other link-with-querystring on this page already behaves.
+function buildViewHref(targetView: "list" | "map", params: SearchParams): string {
+  const qs = new URLSearchParams();
+  if (params.category) qs.set("category", params.category);
+  if (params.location) qs.set("location", params.location);
+  if (params.price_min) qs.set("price_min", params.price_min);
+  if (params.price_max) qs.set("price_max", params.price_max);
+  if (params.price_unit) qs.set("price_unit", params.price_unit);
+  if (targetView === "map") qs.set("view", "map");
+  // view=list is the default and intentionally omitted, so a plain
+  // "/listings" (no view param) always means list — keeps default/shared
+  // URLs clean, matches how an absent category/location param already
+  // means "no filter" rather than an explicit empty string.
+  const qsString = qs.toString();
+  return qsString ? `/listings?${qsString}` : "/listings";
+}
 
 function isValidCategory(value: string | undefined): value is ListingCategory {
   return LISTING_CATEGORIES.some((c) => c.value === value);
@@ -49,6 +76,8 @@ export default async function ListingsIndexPage({
   searchParams: Promise<SearchParams>;
 }) {
   const params = await searchParams;
+
+  const view: "list" | "map" = params.view === "map" ? "map" : "list";
 
   const category = isValidCategory(params.category) ? params.category : undefined;
   const trimmedLocation = params.location?.trim();
@@ -79,7 +108,7 @@ export default async function ListingsIndexPage({
   // query rather than a behavior engineers need to remember to add later.
   let query = supabase
     .from("listings")
-    .select("id, title, category, price_amount, price_unit, location")
+    .select("id, title, category, price_amount, price_unit, location, lat, lng")
     .eq("status", "published");
 
   if (category) {
@@ -122,6 +151,24 @@ export default async function ListingsIndexPage({
     ...l,
     coverUrl: coverByListingId.get(l.id) ?? null,
   }));
+
+  // Derived from the raw `listings` rows (not from `cards`/`ListingCardData`,
+  // so `ListingCardData`'s shape — and `ListingCard.tsx`'s prop contract —
+  // stays untouched by this feature). Listings with null lat/lng are simply
+  // omitted, never an error, never a placeholder marker for them.
+  const mapPins: ListingMapPin[] = (listings ?? [])
+    .filter(
+      (l): l is typeof l & { lat: number; lng: number } =>
+        l.lat != null && l.lng != null,
+    )
+    .map((l) => ({
+      id: l.id,
+      title: l.title,
+      price_amount: l.price_amount,
+      price_unit: l.price_unit,
+      lat: l.lat,
+      lng: l.lng,
+    }));
 
   return (
     <div className="mx-auto w-full max-w-5xl flex-1 px-4 py-12">
@@ -219,6 +266,37 @@ export default async function ListingsIndexPage({
         )}
       </form>
 
+      {/* Toggle renders unconditionally — a view preference, independent of
+          whether the current filters return any results. */}
+      <div
+        role="group"
+        aria-label="Results view"
+        className="mb-4 inline-flex items-center gap-1 rounded-full border border-line bg-surface-muted p-1"
+      >
+        <Link
+          href={buildViewHref("list", params)}
+          aria-current={view === "list" ? "true" : undefined}
+          className={`flex h-11 min-w-[88px] items-center justify-center rounded-full px-4 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
+            view === "list"
+              ? "bg-primary text-primary-foreground"
+              : "text-foreground hover:bg-surface"
+          }`}
+        >
+          List
+        </Link>
+        <Link
+          href={buildViewHref("map", params)}
+          aria-current={view === "map" ? "true" : undefined}
+          className={`flex h-11 min-w-[88px] items-center justify-center rounded-full px-4 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
+            view === "map"
+              ? "bg-primary text-primary-foreground"
+              : "text-foreground hover:bg-surface"
+          }`}
+        >
+          Map
+        </Link>
+      </div>
+
       {cards.length === 0 ? (
         hasActiveFilter ? (
           <EmptyState icon={SearchX} title="No tools match your filters." description="Try adjusting your search.">
@@ -239,6 +317,8 @@ export default async function ListingsIndexPage({
             </Link>
           </EmptyState>
         )
+      ) : view === "map" ? (
+        <ListingsMapViewLoader pins={mapPins} />
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {cards.map((listing) => (
