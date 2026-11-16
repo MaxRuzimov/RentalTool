@@ -9,6 +9,7 @@ import ListingLocationMapLoader from "@/components/listings/ListingLocationMapLo
 import RequestToRentForm from "@/components/bookings/RequestToRentForm";
 import StarRating from "@/components/reviews/StarRating";
 import ReviewsList, { type ReviewListItem } from "@/components/reviews/ReviewsList";
+import { startConversation } from "@/app/messages/actions";
 
 // Public page (spec §5.5): RLS's "Anyone can view published listings" policy
 // (plus the owner-only policy, for the owner's own view) is what actually
@@ -241,6 +242,21 @@ export default async function ListingDetailPage({
             )}
           </div>
         </div>
+
+        {/* M20 (chat-spec §3.1): never rendered for the listing's own owner
+            — a "message yourself" button would be meaningless, same
+            isOwner-gating convention as the "Edit listing" link above and
+            the booking form's owner branch below. */}
+        {!isOwner && (
+          <form action={startConversation.bind(null, listing.id)} className="mt-3">
+            <button
+              type="submit"
+              className="inline-flex items-center justify-center rounded-full border border-line px-6 text-sm font-medium text-foreground transition-colors hover:border-transparent hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background h-10"
+            >
+              Message {owner?.full_name || "the owner"}
+            </button>
+          </form>
+        )}
       </div>
 
       <div className="mt-6">
