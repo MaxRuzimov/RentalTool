@@ -17,6 +17,7 @@ export default async function Header() {
 
   let fullName: string | null = null;
   let pendingRequestCount = 0;
+  let unreadMessageCount = 0;
   if (user) {
     const { data: profile } = await supabase
       .from("profiles")
@@ -35,6 +36,18 @@ export default async function Header() {
       .eq("status", "pending")
       .eq("listings.owner_id", user.id);
     pendingRequestCount = count ?? 0;
+
+    // M20 (chat-spec §2.4/§5): total unread message count, summed from the
+    // same `my_conversation_unread_counts()` result set `/messages` keys its
+    // own per-row badges off — one source of truth, not two separately
+    // maintained counts. Computed fresh per request/navigation, same
+    // "not itself realtime-subscribed" convention as `pendingRequestCount`
+    // above (spec §2.5's explicit scoping).
+    const { data: unreadRows } = await supabase.rpc("my_conversation_unread_counts");
+    unreadMessageCount = (unreadRows ?? []).reduce(
+      (sum: number, row: { unread_count: number }) => sum + Number(row.unread_count),
+      0,
+    );
   }
 
   return (
@@ -75,6 +88,20 @@ export default async function Header() {
                   aria-label={`${pendingRequestCount} pending booking request${pendingRequestCount === 1 ? "" : "s"}`}
                 >
                   {pendingRequestCount > 99 ? "99+" : pendingRequestCount}
+                </span>
+              )}
+            </Link>
+            <Link
+              href="/messages"
+              className="relative rounded-sm text-zinc-600 hover:text-primary hover:underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background dark:text-zinc-300"
+            >
+              Messages
+              {unreadMessageCount > 0 && (
+                <span
+                  className="ml-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-xs font-semibold text-primary-foreground"
+                  aria-label={`${unreadMessageCount} unread message${unreadMessageCount === 1 ? "" : "s"}`}
+                >
+                  {unreadMessageCount > 99 ? "99+" : unreadMessageCount}
                 </span>
               )}
             </Link>
