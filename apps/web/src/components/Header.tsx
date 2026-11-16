@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Wrench } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { logout } from "@/lib/auth/actions";
+import { todayISODate } from "@/lib/bookings/pricing";
 import LogoutButton from "./LogoutButton";
 
 /**
@@ -17,6 +18,7 @@ export default async function Header() {
 
   let fullName: string | null = null;
   let pendingRequestCount = 0;
+  let approvedUpcomingCount = 0;
   if (user) {
     const { data: profile } = await supabase
       .from("profiles")
@@ -35,6 +37,19 @@ export default async function Header() {
       .eq("status", "pending")
       .eq("listings.owner_id", user.id);
     pendingRequestCount = count ?? 0;
+
+    // Renter-side symmetry (booking-approval-followup-spec.md §A): count of
+    // this user's own approved bookings that haven't ended yet. No join to
+    // `listings` needed — unlike the owner query above, `renter_id` lives
+    // directly on `bookings`. `today` must come from `todayISODate()`
+    // (America/Toronto), never a raw `Date`/`toISOString()` comparison.
+    const { count: approvedCount } = await supabase
+      .from("bookings")
+      .select("id", { count: "exact", head: true })
+      .eq("renter_id", user.id)
+      .eq("status", "approved")
+      .gte("end_date", todayISODate());
+    approvedUpcomingCount = approvedCount ?? 0;
   }
 
   return (
@@ -75,6 +90,19 @@ export default async function Header() {
                   aria-label={`${pendingRequestCount} pending booking request${pendingRequestCount === 1 ? "" : "s"}`}
                 >
                   {pendingRequestCount > 99 ? "99+" : pendingRequestCount}
+                </span>
+              )}
+              {/* Distinct green pill, separate from the primary pending-pill
+                  above (spec §A.2/§A.4) — "approved, nothing to act on"
+                  shouldn't share the "action needed" color, and both pills
+                  can render at once since a user can be both owner and
+                  renter. */}
+              {approvedUpcomingCount > 0 && (
+                <span
+                  className="ml-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-success-bg px-1.5 text-xs font-semibold text-success-foreground"
+                  aria-label={`${approvedUpcomingCount} active upcoming approved booking${approvedUpcomingCount === 1 ? "" : "s"}`}
+                >
+                  {approvedUpcomingCount > 99 ? "99+" : approvedUpcomingCount}
                 </span>
               )}
             </Link>
