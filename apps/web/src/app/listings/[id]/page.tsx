@@ -5,6 +5,7 @@ import { signImageUrls, signVideoUrl } from "@/lib/listings/storage";
 import { categoryLabel, formatPrice } from "@/lib/listings/categories";
 import ImagePlaceholder from "@/components/listings/ImagePlaceholder";
 import OwnerAvatar from "@/components/listings/OwnerAvatar";
+import ListingLocationMapLoader from "@/components/listings/ListingLocationMapLoader";
 import RequestToRentForm from "@/components/bookings/RequestToRentForm";
 import StarRating from "@/components/reviews/StarRating";
 import ReviewsList, { type ReviewListItem } from "@/components/reviews/ReviewsList";
@@ -31,7 +32,9 @@ export default async function ListingDetailPage({
 
   const { data: listing } = await supabase
     .from("listings")
-    .select("id, owner_id, title, description, category, price_amount, price_unit, location")
+    .select(
+      "id, owner_id, title, description, category, price_amount, price_unit, location, lat, lng",
+    )
     .eq("id", id)
     .maybeSingle();
 
@@ -207,6 +210,23 @@ export default async function ListingDetailPage({
 
       <h2 className="mt-6 text-lg font-semibold text-foreground">Description</h2>
       <p className="mt-2 whitespace-pre-line text-sm text-foreground">{listing.description}</p>
+
+      {listing.lat != null && listing.lng != null && (
+        <div className="mt-8 border-t border-line-strong pt-6">
+          <h2 className="text-lg font-semibold text-foreground">Location</h2>
+          <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+            Approximate area shown for privacy — message the owner for exact pickup details.
+          </p>
+          <div className="mt-3">
+            <ListingLocationMapLoader
+              lat={listing.lat}
+              lng={listing.lng}
+              title={listing.title}
+              location={listing.location}
+            />
+          </div>
+        </div>
+      )}
 
       <div className="mt-8 border-t border-line-strong pt-6">
         <h2 className="text-lg font-semibold text-foreground">Owner</h2>

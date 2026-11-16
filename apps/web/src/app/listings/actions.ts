@@ -1,8 +1,10 @@
 "use server";
 
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { LISTING_CATEGORIES, PRICE_UNITS } from "@/lib/listings/categories";
+import { geocodeLocation, jitterCoordinates } from "@/lib/listings/geocode";
 
 /**
  * docs/design/video-upload-spec.md §8 addendum: createListing/updateListing
@@ -71,6 +73,25 @@ function parseListingFields(formData: FormData): { values: ParsedListingFields }
 }
 
 /**
+ * M17 (spec docs/design/location-map-spec.md §3.3): geocodes + jitters a
+ * listing's `location` text, returning `{ lat, lng }` (both `null` on any
+ * geocoding failure, which `geocodeLocation` itself never throws for — see
+ * that module). Callers always stay inside their existing try/catch; this
+ * never blocks listing creation/editing on a geocoding failure.
+ */
+async function geocodeForListing(
+  supabase: SupabaseClient,
+  location: string,
+): Promise<{ lat: number | null; lng: number | null }> {
+  const raw = await geocodeLocation(supabase, location);
+  if (!raw) {
+    return { lat: null, lng: null };
+  }
+  const jittered = jitterCoordinates(raw);
+  return { lat: jittered.lat, lng: jittered.lng };
+}
+
+/**
  * Creates a new listing (spec §5.1, fields only per §8 addendum). `owner_id`
  * is always taken from the authenticated session, never from client input.
  * Returns the new listing's id on success — it's the caller's (ListingForm's)
@@ -100,9 +121,14 @@ export async function createListing(formData: FormData): Promise<ListingActionSt
       return { status: "error", message: parsed.error };
     }
 
+    // M17 (spec §3.3): geocode + jitter the validated location text. Never
+    // blocks creation — geocodeForListing/geocodeLocation never throw, and
+    // null/null is a perfectly valid value for lat/lng on insert.
+    const { lat, lng } = await geocodeForListing(supabase, parsed.values.location);
+
     const { data: listing, error } = await supabase
       .from("listings")
-      .insert({ owner_id: user.id, ...parsed.values })
+      .insert({ owner_id: user.id, ...parsed.values, lat, lng })
       .select("id")
       .single();
 
@@ -145,7 +171,7 @@ export async function updateListing(
 
     const { data: existing } = await supabase
       .from("listings")
-      .select("id, owner_id")
+      .select("id, owner_id, location, lat, lng")
       .eq("id", listingId)
       .maybeSingle();
 
@@ -158,7 +184,23 @@ export async function updateListing(
       return { status: "error", message: parsed.error };
     }
 
-    const { error } = await supabase.from("listings").update(parsed.values).eq("id", listingId);
+    // M17 (spec §3.3): only re-geocode (and re-jitter) if the submitted
+    // location text actually changed from the existing row's — normalized
+    // the same way as geocodeLocation's cache key for the comparison.
+    // Editing title/price/description must not cost a geocode call or
+    // silently re-roll the jitter on a listing whose pin a renter may
+    // already be looking at.
+    const locationChanged =
+      parsed.values.location.trim().toLowerCase() !== (existing.location ?? "").trim().toLowerCase();
+
+    const { lat, lng } = locationChanged
+      ? await geocodeForListing(supabase, parsed.values.location)
+      : { lat: existing.lat, lng: existing.lng };
+
+    const { error } = await supabase
+      .from("listings")
+      .update({ ...parsed.values, lat, lng })
+      .eq("id", listingId);
 
     if (error) {
       console.error(error);
