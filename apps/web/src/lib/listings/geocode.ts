@@ -100,6 +100,32 @@ export async function geocodeLocation(
   return result;
 }
 
+const METERS_PER_DEGREE_LAT = 111_320;
+const JITTER_MIN_METERS = 150;
+const JITTER_MAX_METERS = 300;
+
+/**
+ * Privacy jitter (spec §4): offsets a raw geocoded point by a random
+ * 150-300m distance in a random 0-360deg bearing, using the standard
+ * equirectangular approximation (accurate enough at this scale — no need
+ * for a more exact geodesic formula for a sub-300m offset). Must be called
+ * exactly once per geocode and the result persisted — never recomputed per
+ * page view, never re-rolled on an edit that doesn't change the `location`
+ * text (see actions.ts).
+ */
+export function jitterCoordinates({ lat, lng }: LatLng): LatLng {
+  const distanceMeters = JITTER_MIN_METERS + Math.random() * (JITTER_MAX_METERS - JITTER_MIN_METERS);
+  const bearingRadians = Math.random() * 2 * Math.PI;
+
+  const metersPerDegreeLng = METERS_PER_DEGREE_LAT * Math.cos((lat * Math.PI) / 180);
+
+  const deltaLat = (distanceMeters * Math.cos(bearingRadians)) / METERS_PER_DEGREE_LAT;
+  const deltaLng =
+    metersPerDegreeLng === 0 ? 0 : (distanceMeters * Math.sin(bearingRadians)) / metersPerDegreeLng;
+
+  return { lat: lat + deltaLat, lng: lng + deltaLng };
+}
+
 export type LocationSuggestionResult = { label: string; lat: number; lng: number };
 
 /**
@@ -170,30 +196,4 @@ export async function searchLocationSuggestions(
   } finally {
     clearTimeout(timeout);
   }
-}
-
-const METERS_PER_DEGREE_LAT = 111_320;
-const JITTER_MIN_METERS = 150;
-const JITTER_MAX_METERS = 300;
-
-/**
- * Privacy jitter (spec §4): offsets a raw geocoded point by a random
- * 150-300m distance in a random 0-360deg bearing, using the standard
- * equirectangular approximation (accurate enough at this scale — no need
- * for a more exact geodesic formula for a sub-300m offset). Must be called
- * exactly once per geocode and the result persisted — never recomputed per
- * page view, never re-rolled on an edit that doesn't change the `location`
- * text (see actions.ts).
- */
-export function jitterCoordinates({ lat, lng }: LatLng): LatLng {
-  const distanceMeters = JITTER_MIN_METERS + Math.random() * (JITTER_MAX_METERS - JITTER_MIN_METERS);
-  const bearingRadians = Math.random() * 2 * Math.PI;
-
-  const metersPerDegreeLng = METERS_PER_DEGREE_LAT * Math.cos((lat * Math.PI) / 180);
-
-  const deltaLat = (distanceMeters * Math.cos(bearingRadians)) / METERS_PER_DEGREE_LAT;
-  const deltaLng =
-    metersPerDegreeLng === 0 ? 0 : (distanceMeters * Math.sin(bearingRadians)) / metersPerDegreeLng;
-
-  return { lat: lat + deltaLat, lng: lng + deltaLng };
 }

@@ -6,7 +6,7 @@
 // Component with its own submit handler). See the spec for the full state
 // machine/keyboard-handling rationale — this implements it as written.
 
-import { useRef, useState, type KeyboardEvent } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { getLocationSuggestions } from "@/app/listings/locationSuggestions";
 
 export type LocationSuggestion = {
@@ -62,6 +62,15 @@ export default function LocationAutocompleteField({
   // discard any resolved response whose sequence number isn't the latest.
   const requestSeq = useRef(0);
 
+  // Clears any pending debounced fetch on unmount so a late setTimeout
+  // callback never calls setState after this component is gone (e.g. fast
+  // navigation away mid-type).
+  useEffect(() => {
+    return () => {
+      if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    };
+  }, []);
+
   function scheduleFetch(queryText: string) {
     if (debounceTimer.current) clearTimeout(debounceTimer.current);
     debounceTimer.current = setTimeout(() => {
@@ -101,6 +110,11 @@ export default function LocationAutocompleteField({
 
     const trimmed = nextValue.trim();
     if (trimmed.length < MIN_QUERY_LENGTH) {
+      // Bump the sequence so any still-in-flight request for a longer query
+      // the user just backspaced away from is discarded as stale when it
+      // resolves, instead of wrongly reopening the dropdown below the
+      // minimum length.
+      requestSeq.current += 1;
       setSuggestions([]);
       setStatus("idle");
       setIsOpen(false);
@@ -158,6 +172,10 @@ export default function LocationAutocompleteField({
   }
 
   function handleBlur() {
+    // Same staleness fix as handleChange's below-minimum branch: the field
+    // is being left, so any in-flight request's response must not be able
+    // to reopen the dropdown after the user has already moved on.
+    requestSeq.current += 1;
     setIsOpen(false);
   }
 
