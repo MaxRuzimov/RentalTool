@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { Wrench } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function Home() {
@@ -9,13 +8,16 @@ export default async function Home() {
   } = await supabase.auth.getUser();
 
   return (
-    <div className="relative flex flex-1 flex-col items-center justify-center overflow-hidden bg-surface-muted px-4 py-16">
-      <Wrench
-        className="pointer-events-none absolute h-72 w-72 text-primary/10"
-        strokeWidth={1}
+    <div className="relative flex flex-1 items-center justify-center overflow-hidden bg-surface-muted px-4 py-16">
+      <div
+        className="pointer-events-none absolute -top-24 -left-24 h-[500px] w-[500px] rounded-full bg-primary/15 blur-[90px]"
         aria-hidden="true"
       />
-      <div className="relative flex w-full max-w-2xl flex-col items-center gap-3 text-center">
+      <div
+        className="pointer-events-none absolute -right-16 -bottom-20 h-[450px] w-[450px] rounded-full bg-accent/15 blur-[90px]"
+        aria-hidden="true"
+      />
+      <div className="relative flex w-full max-w-2xl flex-col items-center gap-3 rounded-3xl border border-line bg-surface/60 p-8 text-center backdrop-blur sm:p-12">
         <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
           Rent the tool you need, from someone nearby.
         </h1>
