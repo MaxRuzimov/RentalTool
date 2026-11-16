@@ -6,6 +6,7 @@ import ListingCard from "@/components/listings/ListingCard";
 import type { ListingCardData } from "@/components/listings/ListingCard";
 import ListingsMapViewLoader from "@/components/listings/ListingsMapViewLoader";
 import type { ListingMapPin } from "@/components/listings/ListingsMapView";
+import LocationAutocompleteField from "@/components/listings/LocationAutocompleteField";
 import EmptyState from "@/components/ui/EmptyState";
 import {
   LISTING_CATEGORIES,
@@ -195,16 +196,16 @@ export default async function ListingsIndexPage({
           </select>
         </label>
 
-        <label className="flex w-full flex-col gap-1 text-sm sm:w-40">
-          <span className="font-medium text-foreground">Location</span>
-          <input
-            type="text"
+        <div className="w-full text-sm sm:w-40">
+          <LocationAutocompleteField
+            id="location-filter"
             name="location"
+            label="Location"
             defaultValue={params.location ?? ""}
             placeholder="e.g. Etobicoke"
-            className={inputClassName}
+            inputClassName={inputClassName}
           />
-        </label>
+        </div>
 
         <div className="flex w-full items-end gap-2 sm:w-auto">
           <label className="flex w-full flex-col gap-1 text-sm sm:w-24">
