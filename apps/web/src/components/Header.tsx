@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { logout } from "@/lib/auth/actions";
 import { todayISODate } from "@/lib/bookings/pricing";
 import LogoutButton from "./LogoutButton";
+import MessagesNavLink from "./messages/MessagesNavLink";
 
 /**
  * Site header / nav (spec §1). Server Component so auth state is read from
@@ -55,9 +56,12 @@ export default async function Header() {
     // M20 (chat-spec §2.4/§5): total unread message count, summed from the
     // same `my_conversation_unread_counts()` result set `/messages` keys its
     // own per-row badges off — one source of truth, not two separately
-    // maintained counts. Computed fresh per request/navigation, same
-    // "not itself realtime-subscribed" convention as `pendingRequestCount`
-    // above (spec §2.5's explicit scoping).
+    // maintained counts. Computed fresh per request/navigation, same as
+    // `pendingRequestCount` above — but unlike that count, this one is
+    // handed to `MessagesNavLink` (a Client Component) as a starting value
+    // that then gets live-updated via Realtime, since "no signal until the
+    // next navigation" turned out to be a real bug for chat specifically
+    // (see MessagesNavLink's own comment).
     const { data: unreadRows } = await supabase.rpc("my_conversation_unread_counts");
     unreadMessageCount = (unreadRows ?? []).reduce(
       (sum: number, row: { unread_count: number }) => sum + Number(row.unread_count),
@@ -119,20 +123,7 @@ export default async function Header() {
                 </span>
               )}
             </Link>
-            <Link
-              href="/messages"
-              className="relative rounded-sm text-zinc-600 hover:text-primary hover:underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background dark:text-zinc-300"
-            >
-              Messages
-              {unreadMessageCount > 0 && (
-                <span
-                  className="ml-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-xs font-semibold text-primary-foreground"
-                  aria-label={`${unreadMessageCount} unread message${unreadMessageCount === 1 ? "" : "s"}`}
-                >
-                  {unreadMessageCount > 99 ? "99+" : unreadMessageCount}
-                </span>
-              )}
-            </Link>
+            <MessagesNavLink currentUserId={user.id} initialUnreadCount={unreadMessageCount} />
             <Link
               href="/profile"
               className="max-w-[10rem] truncate rounded-sm text-zinc-600 hover:text-primary hover:underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background dark:text-zinc-300"
