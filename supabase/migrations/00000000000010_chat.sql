@@ -88,7 +88,11 @@ create policy "Participants can update their conversation's read cursor"
 -- is always a participant per messages' own INSERT policy) and are left
 -- open to either participant — there is no security stake in who bumps a
 -- timestamp/preview on a conversation they're already part of. Each
--- participant may only move their OWN *_last_read_at column forward.
+-- participant may only change their OWN *_last_read_at column (not the
+-- other party's) — this does not itself enforce monotonicity (a hand-built
+-- request could move a caller's own cursor backward), but the only real
+-- caller, markConversationRead, always sets it to now(); there is no
+-- security stake in a user desyncing their own unread-count perception.
 -- ---------------------------------------------------------------------------
 
 create function public.conversations_enforce_columns()

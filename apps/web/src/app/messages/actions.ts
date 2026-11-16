@@ -16,7 +16,6 @@ export type SendMessageState =
 
 const COPY = {
   sessionExpired: "Your session has expired. Please log in again.",
-  ownListing: "You can't message yourself about your own listing.",
   noAccess: "You don't have access to this conversation.",
   blankBody: "Please write a message before sending.",
   tooLong: "Messages must be 2000 characters or fewer.",
@@ -57,9 +56,15 @@ export async function startConversation(listingId: string): Promise<void> {
 
     // Listing not found, or (defense-in-depth backstop for spec §3.1 — the
     // button is already hidden for the listing's own owner, but a
-    // hand-built call must still be rejected server-side, same "ownListing"
-    // convention as createBookingRequest) the caller is the listing's own
-    // owner: fall through with no conversationId, handled below.
+    // hand-built call must still be rejected server-side) the caller is the
+    // listing's own owner: fall through with no conversationId. This is a
+    // plain `void` Server Action invoked as a form action (no
+    // useActionState channel to surface a message through, unlike
+    // createBookingRequest), so this backstop silently redirects back to
+    // the listing page with no error copy — code-review-noted deviation
+    // from spec §3.1 step 3's "reject with a friendly message" wording,
+    // accepted as-is since the UI path is already unreachable and this is
+    // a server-side-only safety net, not a real user-facing flow.
     if (listing && listing.owner_id !== user.id) {
       const { data: existing } = await supabase
         .from("conversations")
