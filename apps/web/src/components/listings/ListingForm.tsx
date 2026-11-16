@@ -27,6 +27,7 @@ import {
 } from "@/app/listings/actions";
 import { syncListingMedia, type VideoSyncInstruction } from "@/lib/listings/clientUpload";
 import { isRedirectError } from "@/lib/forms/isRedirectError";
+import LocationAutocompleteField from "@/components/listings/LocationAutocompleteField";
 
 export type ListingFormInitialValues = {
   title: string;
@@ -412,14 +413,13 @@ export default function ListingForm({
             <label htmlFor="location" className="text-sm font-medium text-foreground">
               Location
             </label>
-            <input
+            <LocationAutocompleteField
               id="location"
               name="location"
-              type="text"
+              hideLabel
               required
               defaultValue={values.location}
               placeholder="e.g. Etobicoke, ON"
-              className="w-full rounded-lg border border-line bg-transparent px-3 py-2 text-sm text-foreground placeholder:text-zinc-400 outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20 dark:placeholder:text-zinc-500"
             />
           </div>
 
